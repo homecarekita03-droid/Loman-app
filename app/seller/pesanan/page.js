@@ -41,7 +41,7 @@ export default function SellerPesanan() {
     {id:"all",l:"Semua",count:orders.length},
     {id:"pending",l:"Baru",count:orders.filter(o=>o.status==="pending").length},
     {id:"confirmed",l:"Diterima",count:orders.filter(o=>o.status==="confirmed").length},
-    {id:"processing",l:"Dimasak",count:orders.filter(o=>o.status==="cooking").length},
+    {id:"processing",l:"Diproses",count:orders.filter(o=>o.status==="processing").length},
     {id:"done",l:"Selesai",count:orders.filter(o=>o.status==="done").length},
   ];
 
