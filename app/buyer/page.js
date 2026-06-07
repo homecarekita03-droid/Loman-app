@@ -5,6 +5,9 @@ import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
+import NotifPanel from "@/components/NotifPanel";
+import ChatList from "@/components/ChatList";
+import ChatRoom from "@/components/ChatRoom";
 import LocationPicker from "@/components/LocationPicker";
 import { useLocation, getDistance, formatDistance } from "@/lib/useLocation";
 
@@ -27,6 +30,9 @@ export default function BuyerHome() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [showLocPicker, setShowLocPicker] = useState(false);
+  const [showNotif, setShowNotif] = useState(false);
+  const [showChatList, setShowChatList] = useState(false);
+  const [chatOrder, setChatOrder] = useState(null);
   const [sortBy, setSortBy] = useState("distance"); // "distance" or "rating"
 
   useEffect(() => { if (!al && !user) router.push("/login"); }, [user, al, router]);
@@ -69,6 +75,10 @@ export default function BuyerHome() {
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5", paddingBottom: "80px" }}>
 
+      {showNotif && <NotifPanel onClose={()=>setShowNotif(false)} />}
+      {showChatList && <ChatList onOpenChat={(c)=>{setShowChatList(false);setChatOrder(c);}} onClose={()=>setShowChatList(false)} />}
+      {chatOrder && <ChatRoom pesananId={chatOrder.pesananId||chatOrder.id} tokoNama={chatOrder.tokoNama} pembeliNama={chatOrder.pembeliNama} onClose={()=>setChatOrder(null)} />}
+
       {/* ===== HEADER ===== */}
       <div style={{
         background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
@@ -94,6 +104,8 @@ export default function BuyerHome() {
               fontSize: "18px", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>📋</button>
+            <button onClick={()=>setShowChatList(true)} style={{ width:"40px", height:"40px", borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"none", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>💬</button>
+            <button onClick={()=>setShowNotif(true)} style={{ width:"40px", height:"40px", borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"none", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>🔔</button>
           </div>
         </div>
         <div style={{ padding: "12px 20px 0" }}>

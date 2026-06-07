@@ -6,6 +6,7 @@ import { db, storage } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import BottomNav from "@/components/BottomNav";
+import ShareProduct from "@/components/ShareProduct";
 
 const emojiList = ["🍚","🍜","🍗","🥘","🧁","🍰","🥤","☕","🧃","👕","🧴","📦","🌿","🍳","🥗","🍲","🍕","🍔","🌮","🥪","🍱","🧆","🥞","🍿"];
 const kategoriList = [
@@ -30,6 +31,7 @@ export default function KelolaProduk() {
   const [fotoFile, setFotoFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState("");
+  const [shareProduct, setShareProduct] = useState(null);
   const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
 
   useEffect(() => { if(!al&&!user) router.push("/login"); }, [user,al,router]);
@@ -422,6 +424,7 @@ export default function KelolaProduk() {
                 </div>
                 <div style={{ display:"flex", gap:"8px", marginTop:"10px", paddingTop:"10px", borderTop:"1px solid #f3f4f6" }}>
                   <button onClick={()=>edit(p)} style={{ flex:1, padding:"8px", borderRadius:"10px", background:"#f3f4f6", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:600, color:"#374151" }}>✏️ Edit</button>
+                  <button onClick={()=>setShareProduct(p)} style={{ flex:1, padding:"8px", borderRadius:"10px", background:"#dbeafe", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:600, color:"#2563eb" }}>📤 Share</button>
                   <button onClick={()=>del(p.id)} style={{ flex:1, padding:"8px", borderRadius:"10px", background:"#fef2f2", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:600, color:"#ef4444" }}>🗑️ Hapus</button>
                 </div>
               </div>
@@ -442,6 +445,7 @@ export default function KelolaProduk() {
         }}>+</button>
       )}
 
+      {shareProduct && <ShareProduct product={shareProduct} tokoNama="" onClose={()=>setShareProduct(null)} />}
       <BottomNav role="seller" active="products" />
     </div>
   );

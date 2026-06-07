@@ -9,7 +9,7 @@ import BottomNav from "@/components/BottomNav";
 const sb = {
   pending:{l:"⏳ Menunggu",bg:"#f3f4f6",c:"#4b5563"},
   confirmed:{l:"✅ Diterima",bg:"#dbeafe",c:"#2563eb"},
-  cooking:{l:"🍳 Dimasak",bg:"#fef3c7",c:"#d97706"},
+  processing:{l:"🔄 Diproses",bg:"#fef3c7",c:"#d97706"},
   delivering:{l:"🛵 Diantar",bg:"#e0e7ff",c:"#7c3aed"},
   done:{l:"✅ Selesai",bg:"#d1fae5",c:"#059669"},
   cancelled:{l:"❌ Batal",bg:"#fee2e2",c:"#dc2626"},
@@ -41,7 +41,7 @@ export default function SellerPesanan() {
     {id:"all",l:"Semua",count:orders.length},
     {id:"pending",l:"Baru",count:orders.filter(o=>o.status==="pending").length},
     {id:"confirmed",l:"Diterima",count:orders.filter(o=>o.status==="confirmed").length},
-    {id:"cooking",l:"Dimasak",count:orders.filter(o=>o.status==="cooking").length},
+    {id:"processing",l:"Dimasak",count:orders.filter(o=>o.status==="cooking").length},
     {id:"done",l:"Selesai",count:orders.filter(o=>o.status==="done").length},
   ];
 

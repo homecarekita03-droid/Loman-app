@@ -10,7 +10,7 @@ import ChatRoom from "@/components/ChatRoom";
 const sc = {
   pending:{l:"⏳ Menunggu",bg:"#f3f4f6",c:"#4b5563"},
   confirmed:{l:"✅ Diterima",bg:"#dbeafe",c:"#2563eb"},
-  cooking:{l:"🍳 Dimasak",bg:"#fef3c7",c:"#d97706"},
+  processing:{l:"🔄 Diproses",bg:"#fef3c7",c:"#d97706"},
   delivering:{l:"🛵 Diantar",bg:"#e0e7ff",c:"#7c3aed"},
   done:{l:"✅ Selesai",bg:"#d1fae5",c:"#059669"},
   cancelled:{l:"❌ Batal",bg:"#fee2e2",c:"#dc2626"},
