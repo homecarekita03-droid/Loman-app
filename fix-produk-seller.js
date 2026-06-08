@@ -1,3 +1,22 @@
+// ============================================
+// 🔧 Fix Seller Produk — Tulis ulang bersih
+// ============================================
+// Jalankan: node fix-produk-seller.js
+// ============================================
+
+const fs = require("fs");
+const path = require("path");
+
+function writeFile(filePath, content) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(filePath, content.trimStart());
+  console.log("  ✅ " + filePath);
+}
+
+console.log("🔧 Menulis ulang seller produk...");
+
+writeFile("app/seller/produk/page.js", `
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -296,3 +315,10 @@ export default function KelolaProduk() {
     </div>
   );
 }
+`);
+
+console.log("");
+console.log("🎉 Selesai! File ditulis ulang bersih.");
+console.log("");
+console.log("   npm run dev");
+console.log("   git add . && git commit -m 'fix produk seller' && git push");
