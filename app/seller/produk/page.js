@@ -36,6 +36,7 @@ export default function KelolaProduk() {
   const router = useRouter();
   const { user, loading: al } = useAuth();
   const [storeId, setStoreId] = useState(null);
+  const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -56,7 +57,7 @@ export default function KelolaProduk() {
       try {
         const sq = await getDocs(query(collection(db,"toko"),where("pemilikId","==",user.uid)));
         if(!sq.empty) {
-          const sid=sq.docs[0].id; setStoreId(sid);
+          const sid=sq.docs[0].id; setStoreId(sid); setStore({id:sid,...sq.docs[0].data()});
           const pq = await getDocs(query(collection(db,"produk"),where("tokoId","==",sid)));
           setProducts(pq.docs.map(d=>({id:d.id,...d.data()})));
         }
