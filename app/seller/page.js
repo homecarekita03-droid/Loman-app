@@ -94,10 +94,11 @@ export default function SellerDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div style={{ padding:"16px 20px 0", display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:"8px" }}>
+      <div style={{ padding:"16px 20px 0", display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:"8px" }}>
         {[
           {icon:"📦",label:"Produk",path:"/seller/produk"},
           {icon:"📋",label:"Pesanan",path:"/seller/pesanan"},
+          {icon:"📊",label:"Laporan",path:"/seller/laporan"},
           {icon:"⚙️",label:"Edit Toko",path:"/seller/toko-setting"},
           {icon:"👤",label:"Profil",path:"/seller/profil"},
         ].map(a => (
