@@ -1,3 +1,22 @@
+// ============================================
+// 🔧 Fix Toko Setting (tulis ulang bersih)
+// ============================================
+// Jalankan: node fix-toko-setting.js
+// ============================================
+
+const fs = require("fs");
+const path = require("path");
+
+function writeFile(filePath, content) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(filePath, content.trimStart());
+  console.log("  ✅ " + filePath);
+}
+
+console.log("🔧 Fixing toko-setting...");
+
+writeFile("app/seller/toko-setting/page.js", `
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -321,3 +340,11 @@ export default function TokoSetting() {
     </div>
   );
 }
+`);
+
+console.log("");
+console.log("🎉 File toko-setting.js ditulis ulang bersih!");
+console.log("");
+console.log("   Jalankan: npm run dev");
+console.log("   Jika OK: git add . && git commit -m 'fix toko setting' && git push");
+console.log("");
