@@ -462,7 +462,7 @@ export default function KelolaProduk() {
       )}
 
       {shareProduct && <ShareProduct product={shareProduct} tokoNama={store?.nama || ""} onClose={()=>setShareProduct(null)} />}
-      {showShareAll && <ShareAllProducts products={products} tokoNama="" tokoId={storeId} onClose={()=>setShowShareAll(false)} />}
+      {showShareAll && <ShareAllProducts products={products} tokoNama={store?.nama || ""} tokoId={storeId} onClose={()=>setShowShareAll(false)} />}
       <BottomNav role="seller" active="products" />
     </div>
   );
