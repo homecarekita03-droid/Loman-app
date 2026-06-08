@@ -13,10 +13,18 @@ import { useLocation, getDistance, formatDistance } from "@/lib/useLocation";
 const categories = [
   { id: "all", emoji: "🔥", name: "Semua" },
   { id: "makanan", emoji: "🍚", name: "Makanan" },
-  { id: "kue", emoji: "🧁", name: "Kue & Snack" },
   { id: "minuman", emoji: "🥤", name: "Minuman" },
+  { id: "kue", emoji: "🧁", name: "Kue & Snack" },
+  { id: "kebutuhan_pokok", emoji: "🛒", name: "Sembako" },
+  { id: "kelontong", emoji: "🏪", name: "Kelontong" },
+  { id: "frozen_food", emoji: "🧊", name: "Frozen Food" },
   { id: "laundry", emoji: "👕", name: "Laundry" },
-  { id: "kebutuhan", emoji: "🧴", name: "Kebutuhan" },
+  { id: "jasa_elektronik", emoji: "🔧", name: "Jasa Elektronik" },
+  { id: "jasa_bangunan", emoji: "🏗️", name: "Jasa Bangunan" },
+  { id: "jasa_kecantikan", emoji: "💇", name: "Kecantikan" },
+  { id: "fashion", emoji: "👗", name: "Fashion" },
+  { id: "tanaman", emoji: "🌿", name: "Tanaman" },
+  { id: "catering", emoji: "🍱", name: "Catering" },
   { id: "lainnya", emoji: "📦", name: "Lainnya" },
 ];
 
@@ -82,7 +90,7 @@ export default function BuyerHome() {
       return { ...s, distance: dist };
     })
     .filter(s => {
-      const cm = cat === "all" || s.kategori?.toLowerCase() === cat;
+      const cm = cat === "all" || (s.kategoriList?.includes(cat) || s.kategori?.toLowerCase() === cat);
       const sm = !search.trim() || s.nama?.toLowerCase().includes(search.toLowerCase()) || s.deskripsi?.toLowerCase().includes(search.toLowerCase());
       return cm && sm;
     })
@@ -229,7 +237,7 @@ export default function BuyerHome() {
           {/* Categories */}
           <div style={{ padding:"20px 20px 8px" }}>
             <h3 style={{ fontSize:"16px", fontWeight:800, color:"#1f2937", marginBottom:"12px" }}>Kategori</h3>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:"10px" }}>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:"10px" }}>
               {categories.map(c => (
                 <button key={c.id} onClick={() => setCat(c.id)} style={{
                   display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",

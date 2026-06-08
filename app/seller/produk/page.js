@@ -12,10 +12,23 @@ import ShareProduct from "@/components/ShareProduct";
 const emojiList = ["🍚","🍜","🍗","🥘","🧁","🍰","🥤","☕","🧃","👕","🧴","📦","🌿","🍳","🥗","🍲","🍕","🍔","🌮","🥪","🍱","🧆","🥞","🍿"];
 const kategoriList = [
   { value:"makanan", label:"🍚 Makanan" },
-  { value:"kue", label:"🧁 Kue & Snack" },
   { value:"minuman", label:"🥤 Minuman" },
+  { value:"kue", label:"🧁 Kue & Snack" },
+  { value:"kebutuhan_pokok", label:"🛒 Kebutuhan Pokok" },
+  { value:"kelontong", label:"🏪 Kelontong" },
+  { value:"frozen_food", label:"🧊 Frozen Food" },
   { value:"laundry", label:"👕 Laundry" },
-  { value:"kebutuhan", label:"🧴 Kebutuhan" },
+  { value:"jasa_elektronik", label:"🔧 Jasa Elektronik" },
+  { value:"jasa_bangunan", label:"🏗️ Jasa Bangunan" },
+  { value:"jasa_otomotif", label:"🔩 Jasa Otomotif" },
+  { value:"jasa_kebersihan", label:"🧹 Jasa Kebersihan" },
+  { value:"jasa_jahit", label:"🧵 Jasa Jahit" },
+  { value:"jasa_kecantikan", label:"💇 Kecantikan" },
+  { value:"jasa_kesehatan", label:"💊 Kesehatan" },
+  { value:"jasa_pendidikan", label:"📚 Les & Kursus" },
+  { value:"fashion", label:"👗 Fashion" },
+  { value:"tanaman", label:"🌿 Tanaman" },
+  { value:"catering", label:"🍱 Catering" },
   { value:"lainnya", label:"📦 Lainnya" },
 ];
 
@@ -287,7 +300,7 @@ export default function KelolaProduk() {
               {/* Kategori */}
               <div style={{ marginBottom:"14px" }}>
                 <label style={{ fontSize:"14px", fontWeight:600, color:"#374151", marginBottom:"8px", display:"block" }}>Kategori</label>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px" }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"5px", maxHeight:"200px", overflowY:"auto" }}>
                   {kategoriList.map(k => (
                     <button key={k.value} type="button" onClick={()=>setForm(f=>({...f,kategori:k.value}))} style={{
                       padding:"10px", borderRadius:"10px", border:"none",
