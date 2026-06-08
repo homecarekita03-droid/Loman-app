@@ -78,9 +78,11 @@ export default function StoreDetail() {
           boxShadow:"0 2px 8px rgba(0,0,0,0.12)",
         }}>←</button>
         <div style={{
-          height:"200px", background:"linear-gradient(135deg, #fef3c7, #fed7aa, #fecaca)",
+          height:"200px",
+          background: store.banner ? "url("+store.banner+") center/cover no-repeat" : "linear-gradient(135deg, #fef3c7, #fed7aa, #fecaca)",
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:"80px",
-        }}>{store.emoji || "🏪"}</div>
+        }}>{!store.banner && (store.emoji || "🏪")}
+          {store.logo && <div style={{ position:"absolute", bottom:"-28px", left:"20px", width:"60px", height:"60px", borderRadius:"18px", border:"3px solid white", background:"url("+store.logo+") center/cover no-repeat", boxShadow:"0 4px 12px rgba(0,0,0,0.12)", zIndex:6 }}></div>}</div>
       </div>
 
       {/* Store Info Card */}

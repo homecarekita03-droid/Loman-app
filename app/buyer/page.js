@@ -282,13 +282,17 @@ export default function BuyerHome() {
                   background:"white", borderRadius:"16px", overflow:"hidden",
                   boxShadow:"0 2px 8px rgba(0,0,0,0.04)", cursor:"pointer",
                 }}>
-                  <div style={{ height:"120px", background:gradients[idx%gradients.length], display:"flex", alignItems:"center", justifyContent:"center", fontSize:"50px", position:"relative" }}>
-                    {storeEmojis[s.kategori?.toLowerCase()]||s.emoji||"🏪"}
+                  <div style={{ height:"120px",
+                    background: s.banner ? "url("+s.banner+") center/cover no-repeat" : gradients[idx%gradients.length],
+                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:"50px", position:"relative",
+                  }}>
+                    {!s.banner && (storeEmojis[s.kategori?.toLowerCase()]||s.emoji||"🏪")}
+                    {s.logo && <div style={{ position:"absolute", bottom:"-16px", left:"12px", width:"40px", height:"40px", borderRadius:"12px", border:"2px solid white", background:"url("+s.logo+") center/cover no-repeat", boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}></div>}
                     <div style={{ position:"absolute", top:"10px", right:"10px", padding:"4px 10px", borderRadius:"20px", fontSize:"11px", fontWeight:600, background: s.isOpen!==false ? "rgba(16,185,129,0.9)" : "rgba(239,68,68,0.9)", color:"white" }}>{s.isOpen!==false?"● Buka":"● Tutup"}</div>
                     {s.distance!==null && <div style={{ position:"absolute", bottom:"10px", left:"10px", padding:"4px 10px", borderRadius:"20px", fontSize:"12px", fontWeight:700, background:"rgba(0,0,0,0.65)", color:"white" }}>📍 {formatDistance(s.distance)}</div>}
                     <div style={{ position:"absolute", bottom:"10px", right:"10px", padding:"4px 10px", borderRadius:"20px", fontSize:"12px", fontWeight:700, background:"rgba(0,0,0,0.65)", color:"white" }}>⭐ {s.rating||"Baru"}</div>
                   </div>
-                  <div style={{ padding:"14px 16px" }}>
+                  <div style={{ padding: s.logo ? "24px 16px 14px" : "14px 16px" }}>
                     <h4 style={{ fontSize:"16px", fontWeight:700, color:"#1f2937", marginBottom:"6px" }}>{s.nama}</h4>
                     <div style={{ display:"flex", alignItems:"center", gap:"8px", fontSize:"12px", color:"#6b7280", flexWrap:"wrap" }}>
                       <span>📍 {s.alamat||"Perumahan"}</span><span>•</span><span>🕐 {s.jamBuka||"08:00"}-{s.jamTutup||"20:00"}</span>

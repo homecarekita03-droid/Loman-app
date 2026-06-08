@@ -1,3 +1,29 @@
+// ============================================
+// 🖼️ LOMAN — Banner & Logo Toko Custom
+// ============================================
+// Jalankan: node tambah-banner-toko.js
+// ============================================
+
+const fs = require("fs");
+const path = require("path");
+
+function writeFile(filePath, content) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(filePath, content.trimStart());
+  console.log("  ✅ " + filePath);
+}
+
+console.log("");
+console.log("🖼️ ========================================");
+console.log("   Tambah Banner & Logo Toko");
+console.log("========================================");
+console.log("");
+
+// =============================================
+// 1. TOKO SETTING — Tambah Upload Banner & Logo
+// =============================================
+writeFile("app/seller/toko-setting/page.js", `
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -391,3 +417,126 @@ export default function TokoSetting() {
     </div>
   );
 }
+`);
+
+// =============================================
+// 2. BUYER HOME — Tampilkan Banner & Logo Toko
+// =============================================
+const buyerHomePath = "app/buyer/page.js";
+if (fs.existsSync(buyerHomePath)) {
+  let content = fs.readFileSync(buyerHomePath, "utf-8");
+
+  // Ganti bagian store card banner agar support gambar
+  const oldBanner = 'storeEmojis[s.kategori?.toLowerCase()]||s.emoji||"🏪"';
+  if (content.includes(oldBanner) && !content.includes("s.banner")) {
+    // Replace store card rendering
+    content = content.replace(
+      /height:"120px", background:gradients\[idx%gradients\.length\], display:"flex", alignItems:"center", justifyContent:"center", fontSize:"50px", position:"relative".*?\n.*?{storeEmojis\[s\.kategori\?\.toLowerCase\(\)\]\|\|s\.emoji\|\|"🏪"}/,
+      `height:"120px",
+                    background: s.banner ? "url("+s.banner+") center/cover no-repeat" : gradients[idx%gradients.length],
+                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:"50px", position:"relative",
+                  }}>
+                    {!s.banner && (storeEmojis[s.kategori?.toLowerCase()]||s.emoji||"🏪")}
+                    {s.logo && <div style={{ position:"absolute", bottom:"-16px", left:"12px", width:"40px", height:"40px", borderRadius:"12px", border:"2px solid white", background:"url("+s.logo+") center/cover no-repeat", boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}></div>}`
+    );
+
+    // Adjust padding jika ada logo
+    content = content.replace(
+      'padding:"14px 16px" }}>\n                    <h4',
+      'padding: s.logo ? "24px 16px 14px" : "14px 16px" }}>\n                    <h4'
+    );
+
+    fs.writeFileSync(buyerHomePath, content);
+    console.log("  ✅ " + buyerHomePath + " (banner & logo di store cards)");
+  } else {
+    console.log("  ℹ️ " + buyerHomePath + " (sudah ada atau pattern berbeda)");
+  }
+}
+
+// =============================================
+// 3. BUYER TOKO DETAIL — Tampilkan Banner & Logo
+// =============================================
+const tokoDetailPath = "app/buyer/toko/[id]/page.js";
+if (fs.existsSync(tokoDetailPath)) {
+  let content = fs.readFileSync(tokoDetailPath, "utf-8");
+
+  // Ganti banner di detail toko
+  if (!content.includes("store.banner")) {
+    content = content.replace(
+      /height:"200px",\s*background:"linear-gradient\(135deg, #fef3c7, #fed7aa, #fecaca\)",\s*display:"flex", alignItems:"center", justifyContent:"center", fontSize:"80px",\s*\}\}>{store\.emoji \|\| "🏪"}/,
+      `height:"200px",
+          background: store.banner ? "url("+store.banner+") center/cover no-repeat" : "linear-gradient(135deg, #fef3c7, #fed7aa, #fecaca)",
+          display:"flex", alignItems:"center", justifyContent:"center", fontSize:"80px",
+        }}>{!store.banner && (store.emoji || "🏪")}
+          {store.logo && <div style={{ position:"absolute", bottom:"-28px", left:"20px", width:"60px", height:"60px", borderRadius:"18px", border:"3px solid white", background:"url("+store.logo+") center/cover no-repeat", boxShadow:"0 4px 12px rgba(0,0,0,0.12)", zIndex:6 }}></div>}`
+    );
+
+    // Adjust store info card padding
+    content = content.replace(
+      'margin: "-20px 16px 0"',
+      'margin: "-20px 16px 0", paddingTop: store.logo ? "36px" : "20px"'
+    );
+
+    fs.writeFileSync(tokoDetailPath, content);
+    console.log("  ✅ " + tokoDetailPath + " (banner & logo di detail)");
+  } else {
+    console.log("  ℹ️ " + tokoDetailPath + " (sudah ada banner)");
+  }
+}
+
+// =============================================
+// 4. Update Firebase Storage Rules info
+// =============================================
+writeFile("FIREBASE-STORAGE-RULES.md", `
+# 📸 Firebase Storage Rules (UPDATE)
+
+Buka Firebase Console → Storage → Rules
+Ganti isinya dengan ini:
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /produk/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    match /toko-banners/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    match /toko-logos/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
+
+Klik Publish.
+`);
+
+console.log("");
+console.log("🎉 ========================================");
+console.log("   BANNER & LOGO TOKO SELESAI!");
+console.log("========================================");
+console.log("");
+console.log("   ✅ Upload banner toko (gambar lebar)");
+console.log("   ✅ Upload logo toko (persegi)");
+console.log("   ✅ Live preview saat edit");
+console.log("   ✅ Ganti & hapus banner/logo");
+console.log("   ✅ Banner tampil di home pembeli (store card)");
+console.log("   ✅ Banner + logo tampil di detail toko");
+console.log("   ✅ Fallback ke emoji jika tidak ada banner");
+console.log("   ✅ Logo overlay di pojok kiri bawah banner");
+console.log("");
+console.log("   ⚠️  PENTING: Update Firebase Storage Rules!");
+console.log("   Baca file FIREBASE-STORAGE-RULES.md");
+console.log("");
+console.log("   Jalankan: npm run dev");
+console.log("   Deploy:  git add . && git commit -m 'banner logo toko' && git push");
+console.log("");
