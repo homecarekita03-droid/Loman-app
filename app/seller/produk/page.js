@@ -440,7 +440,7 @@ export default function KelolaProduk() {
                 </div>
                 <div style={{ display:"flex", gap:"8px", marginTop:"10px", paddingTop:"10px", borderTop:"1px solid #f3f4f6" }}>
                   <button onClick={()=>edit(p)} style={{ flex:1, padding:"8px", borderRadius:"10px", background:"#f3f4f6", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:600, color:"#374151" }}>✏️ Edit</button>
-                  <button onClick={()=>setShareProduct(p)} style={{ flex:1, padding:"8px", borderRadius:"10px", background:"#dbeafe", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:600, color:"#2563eb" }}>📤 Share</button>
+                  <button onClick={()=>setShareProduct({...p, tokoId: storeId})} style={{ flex:1, padding:"8px", borderRadius:"10px", background:"#dbeafe", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:600, color:"#2563eb" }}>📤 Share</button>
                   <button onClick={()=>del(p.id)} style={{ flex:1, padding:"8px", borderRadius:"10px", background:"#fef2f2", border:"none", cursor:"pointer", fontSize:"13px", fontWeight:600, color:"#ef4444" }}>🗑️ Hapus</button>
                 </div>
               </div>
@@ -461,7 +461,7 @@ export default function KelolaProduk() {
         }}>+</button>
       )}
 
-      {shareProduct && <ShareProduct product={shareProduct} tokoNama="" onClose={()=>setShareProduct(null)} />}
+      {shareProduct && <ShareProduct product={shareProduct} tokoNama={store?.nama || ""} onClose={()=>setShareProduct(null)} />}
       {showShareAll && <ShareAllProducts products={products} tokoNama="" tokoId={storeId} onClose={()=>setShowShareAll(false)} />}
       <BottomNav role="seller" active="products" />
     </div>
