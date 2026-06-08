@@ -54,9 +54,7 @@ export default function TokoSetting() {
 
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(null);
-  const [uploadMsg, setUploadMsg] = useState("");
+      const [uploadMsg, setUploadMsg] = useState("");
 
   useEffect(() => { if(!al&&!user) router.push("/login"); }, [user,al,router]);
   useEffect(() => {
@@ -94,6 +92,22 @@ export default function TokoSetting() {
     });
   }
 
+  function compressImage(file, maxWidth, quality) {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = (maxWidth / w) * h; w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => resolve(blob), "image/jpeg", quality);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   function handleImageSelect(e, type) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -117,7 +131,7 @@ export default function TokoSetting() {
   }
 
   async function removeBanner() { if(!store||!confirm("Hapus banner?")) return; await updateDoc(doc(db,"toko",store.id),{banner:""}); setStore(p=>({...p,banner:""})); setBannerPreview(null); setBannerFile(null); }
-  async function removeLogo() { if(!store||!confirm("Hapus logo?")) return; await updateDoc(doc(db,"toko",store.id),{logo:""}); setStore(p=>({...p,logo:""})); setLogoPreview(null); setLogoFile(null); }
+  ); setStore(p=>({...p,logo:""})); setLogoPreview(null); setLogoFile(null); }
 
   async function save() {
     if(!store) return;
@@ -193,9 +207,9 @@ export default function TokoSetting() {
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>
             {!bannerPreview && <span style={{ fontSize:"40px", opacity:0.5 }}>{form.emoji}</span>}
-            {logoPreview && <div style={{ position:"absolute", bottom:"-20px", left:"14px", width:"48px", height:"48px", borderRadius:"14px", border:"3px solid white", background:"url("+logoPreview+") center/cover", boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}></div>}
+            
           </div>
-          <div style={{ padding: logoPreview ? "28px 14px 12px" : "12px 14px" }}>
+          <div style={{ padding: "12px 14px" }}>
             <h3 style={{ fontSize:"15px", fontWeight:800 }}>{form.nama||"Nama Toko"}</h3>
             {/* Kategori badges */}
             {form.kategoriList.length > 0 && (
@@ -234,25 +248,6 @@ export default function TokoSetting() {
               <input type="file" accept="image/*" onChange={e=>handleImageSelect(e,"banner")} style={{display:"none"}} />
             </label>
           )}
-        </div>
-
-        {/* Logo */}
-        <div style={{ background:"white", borderRadius:"14px", padding:"14px" }}>
-          <label style={{ fontSize:"13px", fontWeight:600, color:"#6b7280", marginBottom:"8px", display:"block" }}>🏷️ Logo Toko</label>
-          <div style={{ display:"flex", gap:"12px", alignItems:"center" }}>
-            {logoPreview ? (
-              <div style={{ position:"relative" }}>
-                <img src={logoPreview} alt="" style={{ width:"64px", height:"64px", borderRadius:"14px", objectFit:"cover", border:"2px solid #e5e7eb" }} />
-                <button onClick={removeLogo} style={{ position:"absolute", top:"-6px", right:"-6px", width:"20px", height:"20px", borderRadius:"50%", background:"#ef4444", color:"white", border:"2px solid white", cursor:"pointer", fontSize:"9px", display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
-              </div>
-            ) : (
-              <label style={{ width:"64px", height:"64px", borderRadius:"14px", border:"2px dashed #d1d5db", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#f9fafb", flexShrink:0 }}>
-                <span style={{ fontSize:"20px" }}>📷</span>
-                <input type="file" accept="image/*" onChange={e=>handleImageSelect(e,"logo")} style={{display:"none"}} />
-              </label>
-            )}
-            {logoPreview && <label style={{ padding:"6px 12px", borderRadius:"8px", background:"#f3f4f6", fontSize:"12px", fontWeight:600, color:"#374151", cursor:"pointer" }}>Ganti<input type="file" accept="image/*" onChange={e=>handleImageSelect(e,"logo")} style={{display:"none"}} /></label>}
-          </div>
         </div>
 
         {/* Emoji */}

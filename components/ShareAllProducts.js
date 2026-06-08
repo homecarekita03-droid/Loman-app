@@ -1,53 +1,57 @@
 "use client";
 
 export default function ShareAllProducts({ products, tokoNama, tokoId, onClose }) {
-  const url = typeof window !== "undefined" ? window.location.origin + "/buyer/toko/" + tokoId : "";
+  const url = typeof window !== "undefined" ? window.location.origin + "/buyer/toko/" + tokoId : "loman.store";
+  const domain = typeof window !== "undefined" ? window.location.host : "loman.store";
 
-  // Generate katalog text
-  let katalog = "🏪 *" + tokoNama + "*\n";
-  katalog += "━━━━━━━━━━━━━━━━━\n\n";
-  katalog += "📋 *DAFTAR MENU/PRODUK:*\n\n";
-
+  // WA format (bold/italic)
+  let waKatalog = "🏪 *" + tokoNama + "*\n";
+  waKatalog += "━━━━━━━━━━━━━━━━━\n\n";
+  
   products.forEach((p, i) => {
-    katalog += (i+1) + ". *" + p.nama + "*\n";
-    katalog += "   💰 Rp " + (p.harga||0).toLocaleString("id") + "\n";
-    if (p.deskripsi) katalog += "   📝 " + p.deskripsi + "\n";
-    katalog += "\n";
+    waKatalog += (i+1) + ". *" + p.nama + "*  —  Rp " + (p.harga||0).toLocaleString("id") + "\n";
   });
 
-  katalog += "━━━━━━━━━━━━━━━━━\n";
-  katalog += "🛒 Pesan sekarang di:\n";
-  katalog += "👉 " + url + "\n\n";
-  katalog += "_Loman — Belanja Setetangga 🏘️_";
+  waKatalog += "\n━━━━━━━━━━━━━━━━━\n";
+  waKatalog += "\n✅ Pesan langsung, antar ke rumah\n";
+  waKatalog += "✅ Bayar di tempat (COD)\n";
+  waKatalog += "\n🛒 *PESAN SEKARANG* 👇\n";
+  waKatalog += domain + "\n";
+  waKatalog += "\n_Loman — Belanja Setetangga 🏘️_";
 
-  const encodedText = encodeURIComponent(katalog);
+  // IG format
+  const igCaption = "🏪 " + tokoNama + "\n\n"
+    + "📋 Menu/Produk Kami:\n"
+    + products.map((p,i) => (i+1) + ". " + p.nama + " — Rp " + (p.harga||0).toLocaleString("id")).join("\n")
+    + "\n\n🛒 Pesan di loman.store\n"
+    + "✅ Antar ke rumah • Bayar COD\n"
+    + "\n#JualanOnline #UMKM #Loman #BelanjaSetetangga #" + (tokoNama||"").replace(/\s/g,"");
 
   const shares = [
-    { name: "WhatsApp", icon: "💬", url: "https://wa.me/?text=" + encodedText },
-    { name: "Telegram", icon: "✈️", url: "https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodedText },
-    { name: "Facebook", icon: "📘", url: "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url) },
-    { name: "Twitter/X", icon: "🐦", url: "https://twitter.com/intent/tweet?text=" + encodedText },
-    { name: "Copy", icon: "🔗", url: null },
+    { name: "WhatsApp", icon: "💬",
+      action: () => window.open("https://wa.me/?text=" + encodeURIComponent(waKatalog), "_blank") },
+    { name: "Instagram", icon: "📷",
+      action: () => {
+        navigator.clipboard?.writeText(igCaption.replace(/\\n/g,"\n"));
+        alert("Caption IG sudah di-copy! ✅\n\nBuka Instagram → Buat Post → Paste caption.");
+      }},
+    { name: "Facebook", icon: "📘",
+      action: () => window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank") },
+    { name: "Telegram", icon: "✈️",
+      action: () => window.open("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(waKatalog), "_blank") },
+    { name: "Copy", icon: "🔗",
+      action: () => {
+        navigator.clipboard?.writeText(waKatalog.replace(/\\n/g,"\n").replace(/[*_]/g,"")).then(()=>{
+          alert("Katalog di-copy! ✅");
+        });
+      }},
   ];
-
-  function handleShare(s) {
-    if (s.url) {
-      window.open(s.url, "_blank");
-    } else {
-      const plainText = katalog.replace(/\\n/g, "\n").replace(/[*_]/g, "");
-      navigator.clipboard?.writeText(plainText).then(() => {
-        alert("Katalog berhasil dicopy!");
-      }).catch(() => {
-        prompt("Copy text ini:", plainText);
-      });
-    }
-  }
 
   function nativeShare() {
     if (navigator.share) {
       navigator.share({
         title: tokoNama + " — Menu Lengkap",
-        text: katalog.replace(/\\n/g, "\n").replace(/[*_]/g, ""),
+        text: waKatalog.replace(/\\n/g,"\n").replace(/[*_]/g,""),
         url,
       });
     }
@@ -69,46 +73,44 @@ export default function ShareAllProducts({ products, tokoNama, tokoId, onClose }
           <button onClick={onClose} style={{ width:"32px", height:"32px", borderRadius:"50%", background:"#f3f4f6", border:"none", cursor:"pointer", fontSize:"16px" }}>✕</button>
         </div>
 
-        {/* Preview katalog */}
-        <div style={{ background:"#f9fafb", borderRadius:"14px", padding:"14px", marginBottom:"16px", maxHeight:"200px", overflowY:"auto" }}>
-          <p style={{ fontSize:"12px", color:"#9ca3af", marginBottom:"8px" }}>Preview yang akan dikirim:</p>
-          <div style={{ fontSize:"13px", color:"#374151", lineHeight:1.6 }}>
-            <p style={{ fontWeight:700, marginBottom:"4px" }}>🏪 {tokoNama}</p>
-            <p style={{ color:"#9ca3af", marginBottom:"8px" }}>━━━━━━━━━━━━━</p>
+        {/* Preview */}
+        <div style={{ background:"#1f2937", borderRadius:"14px", padding:"16px", marginBottom:"16px", maxHeight:"240px", overflowY:"auto" }}>
+          <p style={{ fontSize:"11px", color:"#64748b", marginBottom:"8px" }}>Preview pesan:</p>
+          <div style={{ fontSize:"13px", color:"#e2e8f0", lineHeight:1.8, fontFamily:"monospace" }}>
+            <p style={{ fontWeight:700, color:"#fbbf24", marginBottom:"4px" }}>🏪 {tokoNama}</p>
+            <p style={{ color:"#475569", marginBottom:"8px" }}>━━━━━━━━━━━━━━</p>
             {products.map((p, i) => (
-              <div key={p.id} style={{ marginBottom:"8px" }}>
-                <p style={{ fontWeight:600 }}>{i+1}. {p.nama}</p>
-                <p style={{ color:"#f59e0b", fontWeight:700 }}>   💰 Rp {(p.harga||0).toLocaleString("id")}</p>
-              </div>
+              <p key={p.id} style={{ marginBottom:"2px" }}>
+                <span style={{ color:"#9ca3af" }}>{i+1}.</span> <span style={{ color:"#f1f5f9" }}>{p.nama}</span> <span style={{ color:"#fbbf24" }}>Rp {(p.harga||0).toLocaleString("id")}</span>
+              </p>
             ))}
-            <p style={{ color:"#9ca3af" }}>━━━━━━━━━━━━━</p>
-            <p>🛒 Pesan di: {url}</p>
+            <p style={{ color:"#475569", marginTop:"8px", marginBottom:"8px" }}>━━━━━━━━━━━━━━</p>
+            <p style={{ color:"#34d399" }}>✅ Pesan langsung, antar ke rumah</p>
+            <p style={{ color:"#fbbf24", fontWeight:700, marginTop:"4px" }}>🛒 PESAN: {domain}</p>
           </div>
         </div>
 
-        <p style={{ fontSize:"12px", color:"#6b7280", marginBottom:"16px", textAlign:"center" }}>
-          {products.length} produk akan dibagikan
+        <p style={{ fontSize:"12px", color:"#6b7280", marginBottom:"14px", textAlign:"center" }}>
+          📋 {products.length} produk akan dibagikan
         </p>
 
-        {/* Native share */}
         {typeof navigator !== "undefined" && navigator.share && (
           <button onClick={nativeShare} style={{
             width:"100%", padding:"14px", borderRadius:"14px", marginBottom:"12px",
             background:"linear-gradient(135deg, #f59e0b, #ea580c)",
             color:"white", border:"none", fontWeight:700, fontSize:"15px", cursor:"pointer",
-          }}>📤 Bagikan...</button>
+          }}>📤 Bagikan Sekarang</button>
         )}
 
-        {/* Share options */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:"8px" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:"6px" }}>
           {shares.map(s => (
-            <button key={s.name} onClick={()=>handleShare(s)} style={{
+            <button key={s.name} onClick={s.action} style={{
               display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
               padding:"12px 4px", borderRadius:"14px", border:"none",
               background:"#f9fafb", cursor:"pointer",
             }}>
               <span style={{ fontSize:"24px" }}>{s.icon}</span>
-              <span style={{ fontSize:"10px", color:"#6b7280" }}>{s.name}</span>
+              <span style={{ fontSize:"9px", color:"#6b7280" }}>{s.name}</span>
             </button>
           ))}
         </div>
