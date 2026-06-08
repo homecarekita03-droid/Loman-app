@@ -6,6 +6,7 @@ import { db, storage } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import BottomNav from "@/components/BottomNav";
+import ShareAllProducts from "@/components/ShareAllProducts";
 import ShareProduct from "@/components/ShareProduct";
 
 const emojiList = ["🍚","🍜","🍗","🥘","🧁","🍰","🥤","☕","🧃","👕","🧴","📦","🌿","🍳","🥗","🍲","🍕","🍔","🌮","🥪","🍱","🧆","🥞","🍿"];
@@ -32,6 +33,7 @@ export default function KelolaProduk() {
   const [fotoPreview, setFotoPreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState("");
   const [shareProduct, setShareProduct] = useState(null);
+  const [showShareAll, setShowShareAll] = useState(false);
   const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
 
   useEffect(() => { if(!al&&!user) router.push("/login"); }, [user,al,router]);
@@ -161,6 +163,7 @@ export default function KelolaProduk() {
             background:"white", cursor:"pointer", fontSize:"16px",
             display:"flex", alignItems:"center", justifyContent:"center",
           }}>{viewMode === "list" ? "▦" : "☰"}</button>
+          <button onClick={()=>setShowShareAll(true)} style={{ padding:"10px 14px", borderRadius:"12px", background:"white", border:"2px solid #f59e0b", color:"#d97706", fontWeight:700, fontSize:"13px", cursor:"pointer" }}>📤</button>
           <button onClick={()=>{reset();setShowForm(true);}} style={{
             padding:"10px 16px", borderRadius:"12px",
             background:"linear-gradient(135deg, #f59e0b, #ea580c)",
@@ -446,6 +449,7 @@ export default function KelolaProduk() {
       )}
 
       {shareProduct && <ShareProduct product={shareProduct} tokoNama="" onClose={()=>setShareProduct(null)} />}
+      {showShareAll && <ShareAllProducts products={products} tokoNama="" tokoId={storeId} onClose={()=>setShowShareAll(false)} />}
       <BottomNav role="seller" active="products" />
     </div>
   );

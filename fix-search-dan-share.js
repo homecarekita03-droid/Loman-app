@@ -1,3 +1,29 @@
+// ============================================
+// 🔍📤 Fix Pencarian Produk + Share Semua Produk
+// ============================================
+// Jalankan: node fix-search-dan-share.js
+// ============================================
+
+const fs = require("fs");
+const path = require("path");
+
+function writeFile(filePath, content) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(filePath, content.trimStart());
+  console.log("  ✅ " + filePath);
+}
+
+console.log("");
+console.log("🔍📤 ======================================");
+console.log("   Fix Pencarian + Share Semua Produk");
+console.log("=======================================");
+console.log("");
+
+// =============================================
+// 1. BUYER HOME — Pencarian Produk AKTIF
+// =============================================
+writeFile("app/buyer/page.js", `
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -311,3 +337,194 @@ export default function BuyerHome() {
     </div>
   );
 }
+`);
+
+// =============================================
+// 2. SHARE ALL PRODUCTS COMPONENT
+// =============================================
+writeFile("components/ShareAllProducts.js", `
+"use client";
+
+export default function ShareAllProducts({ products, tokoNama, tokoId, onClose }) {
+  const url = typeof window !== "undefined" ? window.location.origin + "/buyer/toko/" + tokoId : "";
+
+  // Generate katalog text
+  let katalog = "🏪 *" + tokoNama + "*\\n";
+  katalog += "━━━━━━━━━━━━━━━━━\\n\\n";
+  katalog += "📋 *DAFTAR MENU/PRODUK:*\\n\\n";
+
+  products.forEach((p, i) => {
+    katalog += (i+1) + ". *" + p.nama + "*\\n";
+    katalog += "   💰 Rp " + (p.harga||0).toLocaleString("id") + "\\n";
+    if (p.deskripsi) katalog += "   📝 " + p.deskripsi + "\\n";
+    katalog += "\\n";
+  });
+
+  katalog += "━━━━━━━━━━━━━━━━━\\n";
+  katalog += "🛒 Pesan sekarang di:\\n";
+  katalog += "👉 " + url + "\\n\\n";
+  katalog += "_Loman — Belanja Setetangga 🏘️_";
+
+  const encodedText = encodeURIComponent(katalog);
+
+  const shares = [
+    { name: "WhatsApp", icon: "💬", url: "https://wa.me/?text=" + encodedText },
+    { name: "Telegram", icon: "✈️", url: "https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodedText },
+    { name: "Facebook", icon: "📘", url: "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url) },
+    { name: "Twitter/X", icon: "🐦", url: "https://twitter.com/intent/tweet?text=" + encodedText },
+    { name: "Copy", icon: "🔗", url: null },
+  ];
+
+  function handleShare(s) {
+    if (s.url) {
+      window.open(s.url, "_blank");
+    } else {
+      const plainText = katalog.replace(/\\\\n/g, "\\n").replace(/[*_]/g, "");
+      navigator.clipboard?.writeText(plainText).then(() => {
+        alert("Katalog berhasil dicopy!");
+      }).catch(() => {
+        prompt("Copy text ini:", plainText);
+      });
+    }
+  }
+
+  function nativeShare() {
+    if (navigator.share) {
+      navigator.share({
+        title: tokoNama + " — Menu Lengkap",
+        text: katalog.replace(/\\\\n/g, "\\n").replace(/[*_]/g, ""),
+        url,
+      });
+    }
+  }
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:999, background:"rgba(0,0,0,0.5)",
+      display:"flex", alignItems:"flex-end", justifyContent:"center",
+    }} onClick={e => { if(e.target===e.currentTarget) onClose(); }}>
+      <div style={{
+        background:"white", width:"100%", maxWidth:"480px",
+        borderRadius:"24px 24px 0 0", padding:"24px 20px 32px",
+        maxHeight:"85vh", overflowY:"auto",
+        animation:"slideUp 0.3s ease",
+      }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px" }}>
+          <h3 style={{ fontSize:"18px", fontWeight:800 }}>📤 Bagikan Semua Produk</h3>
+          <button onClick={onClose} style={{ width:"32px", height:"32px", borderRadius:"50%", background:"#f3f4f6", border:"none", cursor:"pointer", fontSize:"16px" }}>✕</button>
+        </div>
+
+        {/* Preview katalog */}
+        <div style={{ background:"#f9fafb", borderRadius:"14px", padding:"14px", marginBottom:"16px", maxHeight:"200px", overflowY:"auto" }}>
+          <p style={{ fontSize:"12px", color:"#9ca3af", marginBottom:"8px" }}>Preview yang akan dikirim:</p>
+          <div style={{ fontSize:"13px", color:"#374151", lineHeight:1.6 }}>
+            <p style={{ fontWeight:700, marginBottom:"4px" }}>🏪 {tokoNama}</p>
+            <p style={{ color:"#9ca3af", marginBottom:"8px" }}>━━━━━━━━━━━━━</p>
+            {products.map((p, i) => (
+              <div key={p.id} style={{ marginBottom:"8px" }}>
+                <p style={{ fontWeight:600 }}>{i+1}. {p.nama}</p>
+                <p style={{ color:"#f59e0b", fontWeight:700 }}>   💰 Rp {(p.harga||0).toLocaleString("id")}</p>
+              </div>
+            ))}
+            <p style={{ color:"#9ca3af" }}>━━━━━━━━━━━━━</p>
+            <p>🛒 Pesan di: {url}</p>
+          </div>
+        </div>
+
+        <p style={{ fontSize:"12px", color:"#6b7280", marginBottom:"16px", textAlign:"center" }}>
+          {products.length} produk akan dibagikan
+        </p>
+
+        {/* Native share */}
+        {typeof navigator !== "undefined" && navigator.share && (
+          <button onClick={nativeShare} style={{
+            width:"100%", padding:"14px", borderRadius:"14px", marginBottom:"12px",
+            background:"linear-gradient(135deg, #f59e0b, #ea580c)",
+            color:"white", border:"none", fontWeight:700, fontSize:"15px", cursor:"pointer",
+          }}>📤 Bagikan...</button>
+        )}
+
+        {/* Share options */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:"8px" }}>
+          {shares.map(s => (
+            <button key={s.name} onClick={()=>handleShare(s)} style={{
+              display:"flex", flexDirection:"column", alignItems:"center", gap:"6px",
+              padding:"12px 4px", borderRadius:"14px", border:"none",
+              background:"#f9fafb", cursor:"pointer",
+            }}>
+              <span style={{ fontSize:"24px" }}>{s.icon}</span>
+              <span style={{ fontSize:"10px", color:"#6b7280" }}>{s.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+`);
+
+// =============================================
+// 3. UPDATE SELLER PRODUK — Tambah tombol Share Semua
+// =============================================
+const produkPath = "app/seller/produk/page.js";
+if (fs.existsSync(produkPath)) {
+  let content = fs.readFileSync(produkPath, "utf-8");
+
+  // Tambah import ShareAllProducts jika belum ada
+  if (!content.includes("ShareAllProducts")) {
+    content = content.replace(
+      'import BottomNav from "@/components/BottomNav";',
+      'import BottomNav from "@/components/BottomNav";\nimport ShareAllProducts from "@/components/ShareAllProducts";'
+    );
+
+    // Tambah state
+    content = content.replace(
+      'const [viewMode, setViewMode]',
+      'const [showShareAll, setShowShareAll] = useState(false);\n  const [viewMode, setViewMode]'
+    );
+
+    // Tambah tombol Share Semua di header (sebelum tombol + Tambah)
+    content = content.replace(
+      'onClick={()=>{reset();setShowForm(true);}} style={{\n            padding:"10px 16px"',
+      'onClick={()=>setShowShareAll(true)} style={{ padding:"10px 14px", borderRadius:"12px", background:"white", border:"2px solid #f59e0b", color:"#d97706", fontWeight:700, fontSize:"13px", cursor:"pointer" }}>📤</button>\n          <button onClick={()=>{reset();setShowForm(true);}} style={{\n            padding:"10px 16px"'
+    );
+
+    // Tambah modal ShareAllProducts sebelum closing BottomNav
+    content = content.replace(
+      '<BottomNav role="seller" active="products" />',
+      '{showShareAll && <ShareAllProducts products={products} tokoNama="" tokoId={storeId} onClose={()=>setShowShareAll(false)} />}\n      <BottomNav role="seller" active="products" />'
+    );
+
+    fs.writeFileSync(produkPath, content);
+    console.log("  ✅ " + produkPath + " (Share Semua ditambahkan)");
+  } else {
+    console.log("  ℹ️ " + produkPath + " (ShareAllProducts sudah ada)");
+  }
+} else {
+  console.log("  ⚠️ " + produkPath + " tidak ditemukan");
+}
+
+console.log("");
+console.log("🎉 ========================================");
+console.log("   PENCARIAN + SHARE SEMUA SELESAI!");
+console.log("========================================");
+console.log("");
+console.log("   🔍 PENCARIAN:");
+console.log("   ✅ Cari produk berdasarkan nama");
+console.log("   ✅ Cari toko berdasarkan nama");
+console.log("   ✅ Hasil produk tampil dengan foto, harga, nama toko");
+console.log("   ✅ Klik hasil → langsung ke halaman toko");
+console.log("   ✅ Auto-detect: cari produk atau toko");
+console.log("   ✅ Tombol ✕ untuk clear pencarian");
+console.log("   ✅ Promo & kategori disembunyikan saat searching");
+console.log("");
+console.log("   📤 SHARE SEMUA PRODUK:");
+console.log("   ✅ Tombol 📤 di header halaman Produk Saya");
+console.log("   ✅ Generate katalog lengkap (nama + harga semua)");
+console.log("   ✅ Share ke WA, Telegram, FB, Twitter, Copy");
+console.log("   ✅ Native share (HP)");
+console.log("   ✅ Preview katalog sebelum kirim");
+console.log("");
+console.log("   Jalankan: npm run dev");
+console.log("   Deploy:  git add . && git commit -m 'fix search + share all' && git push");
+console.log("");
