@@ -26,7 +26,7 @@ const SEMUA_KATEGORI = [
   { id:"jasa_kesehatan", emoji:"💊", label:"Kesehatan" },
   { id:"jasa_pendidikan", emoji:"📚", label:"Les & Kursus" },
   { id:"fashion", emoji:"👗", label:"Fashion" },
-  { id:"tanaman", emoji:"🌿", label:"Tanaman" },
+  { id:"sayuran", emoji:"🥬", label:"Sayuran" },
   { id:"frozen_food", emoji:"🧊", label:"Frozen Food" },
   { id:"catering", emoji:"🍱", label:"Catering" },
   { id:"lainnya", emoji:"📦", label:"Lainnya" },

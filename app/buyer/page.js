@@ -23,7 +23,7 @@ const categories = [
   { id: "jasa_bangunan", emoji: "🏗️", name: "Jasa Bangunan" },
   { id: "jasa_kecantikan", emoji: "💇", name: "Kecantikan" },
   { id: "fashion", emoji: "👗", name: "Fashion" },
-  { id: "tanaman", emoji: "🌿", name: "Tanaman" },
+  { id: "sayuran", emoji: "🥬", name: "Sayuran" },
   { id: "catering", emoji: "🍱", name: "Catering" },
   { id: "lainnya", emoji: "📦", name: "Lainnya" },
 ];

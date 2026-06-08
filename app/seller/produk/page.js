@@ -9,7 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import ShareAllProducts from "@/components/ShareAllProducts";
 import ShareProduct from "@/components/ShareProduct";
 
-const emojiList = ["🍚","🍜","🍗","🥘","🧁","🍰","🥤","☕","🧃","👕","🧴","📦","🌿","🍳","🥗","🍲","🍕","🍔","🌮","🥪","🍱","🧆","🥞","🍿"];
+const emojiList = ["🍚","🍜","🍗","🥘","🧁","🍰","🥤","☕","🧃","👕","🧴","📦","🥬","🍳","🥗","🍲","🍕","🍔","🌮","🥪","🍱","🧆","🥞","🍿"];
 const kategoriList = [
   { value:"makanan", label:"🍚 Makanan" },
   { value:"minuman", label:"🥤 Minuman" },
@@ -27,7 +27,7 @@ const kategoriList = [
   { value:"jasa_kesehatan", label:"💊 Kesehatan" },
   { value:"jasa_pendidikan", label:"📚 Les & Kursus" },
   { value:"fashion", label:"👗 Fashion" },
-  { value:"tanaman", label:"🌿 Tanaman" },
+  { value:"sayuran", label:"🌿 Tanaman" },
   { value:"catering", label:"🍱 Catering" },
   { value:"lainnya", label:"📦 Lainnya" },
 ];
