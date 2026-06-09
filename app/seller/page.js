@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, updateDoc, setDoc } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
+import { notifPesananDiterima, notifPesananDikirim, notifPesananSelesai } from "@/lib/waNotif";
 import ChatRoom from "@/components/ChatRoom";
 import ChatList from "@/components/ChatList";
 import NotifPanel from "@/components/NotifPanel";
@@ -44,7 +45,19 @@ export default function SellerDashboard() {
   }, [user,userData]);
 
   async function toggleStore() { if(!store)return; const n=!store.isOpen; await updateDoc(doc(db,"toko",store.id),{isOpen:n}); setStore(p=>({...p,isOpen:n})); }
-  async function updateStatus(id,s) { await updateDoc(doc(db,"pesanan",id),{status:s}); setOrders(p=>p.map(o=>o.id===id?{...o,status:s}:o)); }
+  async function updateStatus(id, s) {
+    await updateDoc(doc(db,"pesanan",id), {status:s});
+    setOrders(function(p) { return p.map(function(o) { return o.id===id ? {...o, status:s} : o; }); });
+    var order = orders.find(function(o) { return o.id === id; });
+    if (order && order.pembeliPhone) {
+      var tName = store ? store.nama : "Toko";
+      var waUrl = null;
+      if (s === "confirmed") waUrl = notifPesananDiterima(order.pembeliPhone, tName);
+      if (s === "delivering") waUrl = notifPesananDikirim(order.pembeliPhone, tName);
+      if (s === "done") waUrl = notifPesananSelesai(order.pembeliPhone, tName);
+      if (waUrl) window.open(waUrl, "_blank");
+    }
+  }
 
   const pending = orders.filter(o=>o.status==="pending");
   const active = orders.filter(o=>["confirmed","processing","delivering"].includes(o.status));

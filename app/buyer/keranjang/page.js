@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
+import { notifPesananBaru } from "@/lib/waNotif";
 
 export default function KeranjangPage() {
   const router = useRouter();
@@ -35,6 +36,21 @@ export default function KeranjangPage() {
         });
       }
       setCart([]); localStorage.removeItem("loman_cart"); setSuccess(true);
+      // Smart WA: kirim pengingat singkat ke penjual
+      try {
+        for (var gKey of Object.keys(groups)) {
+          var g = groups[gKey];
+          var tokoDoc = await getDoc(doc(db, "toko", g.tokoId));
+          if (tokoDoc.exists()) {
+            var tokoData = tokoDoc.data();
+            var sellerPhone = tokoData.whatsapp || "";
+            if (sellerPhone) {
+              var waUrl = notifPesananBaru(sellerPhone, userData?.nama || "Pembeli");
+              if (waUrl) window.open(waUrl, "_blank");
+            }
+          }
+        }
+      } catch(we) { console.log("WA notif:", we); }
     } catch(e) { console.error(e); alert("Gagal. Coba lagi."); }
     setLoading(false);
   }
