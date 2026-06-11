@@ -1,4 +1,6 @@
 "use client";
+import { sendWA, notifTemplates } from "../../lib/waNotif";
+"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
@@ -193,3 +195,4 @@ export default function SellerDashboard() {
     </div>
   );
 }
+
