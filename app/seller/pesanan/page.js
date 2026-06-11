@@ -116,7 +116,7 @@ export default function SellerPesanan() {
     </div>
   );
 }
-import { sendWA, notifTemplates } from '@/lib/waNotif';
+import { sendWA, notifTemplates } from '../../../lib/waNotif';
 
 // Di dalam fungsi ganti status:
 if (newStatus === 'Diantar') {
@@ -124,3 +124,4 @@ if (newStatus === 'Diantar') {
   sendWA(order.buyerPhone, pesan);
 }
 // Untuk status 'Diterima' atau 'Diproses', Cukup update Firestore saja (Tanpa WA).
+
