@@ -1,5 +1,4 @@
-﻿"use client";
-
+"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
@@ -7,14 +6,15 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
 import ChatRoom from "@/components/ChatRoom";
+import RatingSimpel from "@/components/RatingSimpel";
 
 const sc = {
-  pending:{l:"â³ Menunggu",bg:"#f3f4f6",c:"#4b5563"},
-  confirmed:{l:"âœ… Diterima",bg:"#dbeafe",c:"#2563eb"},
-  processing:{l:"ðŸ”„ Diproses",bg:"#fef3c7",c:"#d97706"},
-  delivering:{l:"ðŸ›µ Diantar",bg:"#e0e7ff",c:"#7c3aed"},
-  done:{l:"âœ… Selesai",bg:"#d1fae5",c:"#059669"},
-  cancelled:{l:"âŒ Batal",bg:"#fee2e2",c:"#dc2626"},
+  pending:{l:"⏳ Menunggu",bg:"#f3f4f6",c:"#4b5563"},
+  confirmed:{l:"✅ Diterima",bg:"#dbeafe",c:"#2563eb"},
+  processing:{l:"🔄 Diproses",bg:"#fef3c7",c:"#d97706"},
+  delivering:{l:"🛵 Diantar",bg:"#e0e7ff",c:"#7c3aed"},
+  done:{l:"✅ Selesai",bg:"#d1fae5",c:"#059669"},
+  cancelled:{l:"❌ Batal",bg:"#fee2e2",c:"#dc2626"},
 };
 
 export default function PesananBuyer() {
@@ -49,7 +49,7 @@ export default function PesananBuyer() {
   return (
     <div style={{ minHeight:"100vh", background:"#f5f5f5", paddingBottom:"80px" }}>
       <div style={{ background:"white", borderBottom:"1px solid #f3f4f6", padding:"16px 20px", display:"flex", alignItems:"center", gap:"12px" }}>
-        <button onClick={()=>router.push("/buyer")} style={{ width:"36px", height:"36px", borderRadius:"50%", border:"1px solid #e5e7eb", background:"white", cursor:"pointer", fontSize:"16px", display:"flex", alignItems:"center", justifyContent:"center" }}>â†</button>
+        <button onClick={()=>router.push("/buyer")} style={{ width:"36px", height:"36px", borderRadius:"50%", border:"1px solid #e5e7eb", background:"white", cursor:"pointer", fontSize:"16px", display:"flex", alignItems:"center", justifyContent:"center" }}>←</button>
         <h1 style={{ fontSize:"18px", fontWeight:900 }}>Pesanan Saya</h1>
       </div>
 
@@ -59,7 +59,7 @@ export default function PesananBuyer() {
         </div>
       ) : orders.length===0 ? (
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"80px 24px" }}>
-          <div style={{ fontSize:"56px", marginBottom:"12px" }}>ðŸ“‹</div>
+          <div style={{ fontSize:"56px", marginBottom:"12px" }}>📋</div>
           <h3 style={{ fontSize:"18px", fontWeight:700, color:"#374151" }}>Belum Ada Pesanan</h3>
           <button onClick={()=>router.push("/buyer")} style={{ marginTop:"20px", padding:"12px 28px", borderRadius:"12px", background:"linear-gradient(135deg,#f59e0b,#ea580c)", color:"white", border:"none", fontWeight:600, cursor:"pointer" }}>Mulai Belanja</button>
         </div>
@@ -97,11 +97,25 @@ export default function PesananBuyer() {
                         color:"white", border:"none", fontSize:"12px",
                         fontWeight:600, cursor:"pointer",
                         display:"flex", alignItems:"center", gap:"4px",
-                      }}>ðŸ’¬ Chat</button>
+                      }}>💬 Chat</button>
+                    )}
+                    {o.status === "done" && !o.rating && (
+                      <span style={{ fontSize:"11px", color:"#f59e0b", fontWeight:600 }}>⭐ Beri rating</span>
                     )}
                     <span style={{ fontSize:"11px", color:"#9ca3af" }}>{ft(o.createdAt)}</span>
                   </div>
                 </div>
+                {/* Rating untuk pesanan selesai yang belum di-rating */}
+                {o.status === "done" && !o.rating && (
+                  <RatingSimpel orderId={o.id} tokoId={o.tokoId} />
+                )}
+                {/* Tampilkan rating yang sudah diberikan */}
+                {o.rating && (
+                  <div style={{ marginTop:"8px", display:"flex", alignItems:"center", gap:"4px" }}>
+                    <span style={{ fontSize:"12px", color:"#9ca3af" }}>Rating Anda:</span>
+                    <span style={{ fontSize:"13px" }}>{"⭐".repeat(o.rating)}</span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -112,7 +126,6 @@ export default function PesananBuyer() {
     </div>
   );
 }
-
 
 
 

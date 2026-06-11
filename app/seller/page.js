@@ -1,5 +1,4 @@
 "use client";
-import { sendWA, notifTemplates } from "../../lib/waNotif";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,7 +6,6 @@ import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, updateDoc, setDoc } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
-import { notifPesananDiterima, notifPesananDikirim, notifPesananSelesai } from "@/lib/waNotif";
 import ChatRoom from "@/components/ChatRoom";
 import ChatList from "@/components/ChatList";
 import NotifPanel from "@/components/NotifPanel";
@@ -50,15 +48,6 @@ export default function SellerDashboard() {
   async function updateStatus(id, s) {
     await updateDoc(doc(db,"pesanan",id), {status:s});
     setOrders(function(p) { return p.map(function(o) { return o.id===id ? {...o, status:s} : o; }); });
-    var order = orders.find(function(o) { return o.id === id; });
-    if (order && order.pembeliPhone) {
-      var tName = store ? store.nama : "Toko";
-      var pesan = null;
-      if (s === "confirmed") pesan = notifPesananDiterima(tName);
-      if (s === "delivering") pesan = notifPesananDikirim(tName);
-      if (s === "done") pesan = notifPesananSelesai(tName);
-      if (pesan) sendWA(order.pembeliPhone, pesan);
-    }
   }
 
   const pending = orders.filter(o=>o.status==="pending");

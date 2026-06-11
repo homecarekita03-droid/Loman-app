@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where, onSnapshot } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
 import NotifPanel from "@/components/NotifPanel";
 import ChatList from "@/components/ChatList";
@@ -42,8 +42,27 @@ export default function BuyerHome() {
   const [chatOrder, setChatOrder] = useState(null);
   const [sortBy, setSortBy] = useState("distance");
   const [searchMode, setSearchMode] = useState("store"); // "store" or "product"
+  const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => { if (!al && !user) router.push("/login"); }, [user, al, router]);
+
+  // Real-time notif count: pesanan yang statusnya berubah (bukan pending)
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "pesanan"), where("pembeliId", "==", user.uid));
+    const unsub = onSnapshot(q, (snap) => {
+      const lastSeen = parseInt(localStorage.getItem("loman_notif_seen") || "0");
+      let count = 0;
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (data.status !== "pending" && new Date(data.createdAt).getTime() > lastSeen) {
+          count++;
+        }
+      });
+      setNotifCount(count);
+    });
+    return () => unsub();
+  }, [user]);
 
   useEffect(() => {
     async function f() {
@@ -141,7 +160,10 @@ export default function BuyerHome() {
           <div style={{ display:"flex", gap:"8px" }}>
             <button onClick={()=>router.push("/buyer/pesanan")} style={{ width:"40px", height:"40px", borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"none", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>📋</button>
             <button onClick={()=>setShowChatList(true)} style={{ width:"40px", height:"40px", borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"none", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>💬</button>
-            <button onClick={()=>setShowNotif(true)} style={{ width:"40px", height:"40px", borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"none", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>🔔</button>
+            <button onClick={()=>{setShowNotif(true);localStorage.setItem("loman_notif_seen",String(Date.now()));setNotifCount(0);}} style={{ width:"40px", height:"40px", borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"none", fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
+              🔔
+              {notifCount > 0 && <div style={{ position:"absolute", top:"-2px", right:"-2px", width:"18px", height:"18px", borderRadius:"50%", background:"#ef4444", color:"white", fontSize:"10px", fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center" }}>{notifCount > 9 ? "9+" : notifCount}</div>}
+            </button>
           </div>
         </div>
         {/* Search */}
