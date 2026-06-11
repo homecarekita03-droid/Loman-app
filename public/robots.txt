@@ -1,0 +1,9 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /seller
+Disallow: /buyer
+Disallow: /pilih-role
+
+Sitemap: https://loman.store/sitemap.xml
