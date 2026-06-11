@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
+import { alertSuccess, alertError } from "@/components/SweetAlert";
 import { notifPesananBaru } from "@/lib/waNotif";
 
 export default function KeranjangPage() {
@@ -51,7 +52,7 @@ export default function KeranjangPage() {
           }
         }
       } catch(we) { console.log("WA notif:", we); }
-    } catch(e) { console.error(e); alert("Gagal. Coba lagi."); }
+    } catch(e) { console.error(e); alertError("Gagal", "Tidak bisa membuat pesanan. Coba lagi."); }
     setLoading(false);
   }
 

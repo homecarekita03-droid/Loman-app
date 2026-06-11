@@ -6,6 +6,7 @@ import { db, storage } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import BottomNav from "@/components/BottomNav";
+import { alertSuccess, alertError } from "@/components/SweetAlert";
 import LocationPicker from "@/components/LocationPicker";
 
 const tokoEmojis = ["🏪","🍳","🧁","🥤","👕","🧴","🍕","🍔","☕","🌮","🍜","🥘","🍱","🧆","🛒","🎂"];
@@ -111,7 +112,7 @@ export default function TokoSetting() {
   function handleBannerSelect(e) {
     var file = e.target.files && e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert("Maksimal 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { alertError("Terlalu Besar", "Ukuran gambar maksimal 5MB."); return; }
     compressImage(file, 1200, 0.7).then(function(blob) {
       var compressed = new File([blob], file.name, { type: "image/jpeg" });
       setBannerFile(compressed);
@@ -177,7 +178,7 @@ export default function TokoSetting() {
       setSaved(true);
       setUploadMsg("");
       setTimeout(function() { setSaved(false); }, 2000);
-    } catch (e) { alert("Gagal menyimpan."); setUploadMsg(""); }
+    } catch (e) { alertError("Gagal", "Tidak bisa menyimpan pengaturan."); setUploadMsg(""); }
     setSaving(false);
   }
 

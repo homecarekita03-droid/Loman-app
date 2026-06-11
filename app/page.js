@@ -8,6 +8,13 @@ export default function HomePage() {
   const { user, userData, loading } = useAuth();
 
   useEffect(() => {
+    // Register Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(function(e) { console.log("SW:", e); });
+    }
+  }, []);
+
+  useEffect(() => {
     if (!loading) {
       if (user && userData && userData.role) {
         router.push(userData.role === "seller" ? "/seller" : "/buyer");

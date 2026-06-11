@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
+import { alertError, alertConfirm } from "@/components/SweetAlert";
 
 export default function ProfilPage() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function ProfilPage() {
     if(!user) return; setSaving(true);
     const alamat = buildAlamat();
     const updates = { ...form, alamat };
-    try { await updateDoc(doc(db,"users",user.uid),updates); setUserData(p=>({...p,...updates})); setEditing(false); } catch(e){alert("Gagal.");}
+    try { await updateDoc(doc(db,"users",user.uid),updates); setUserData(p=>({...p,...updates})); setEditing(false); } catch(e){alertError("Gagal", "Tidak bisa menyimpan profil.");}
     setSaving(false);
   }
 

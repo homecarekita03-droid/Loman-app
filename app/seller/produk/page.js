@@ -6,6 +6,7 @@ import { db, storage } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import BottomNav from "@/components/BottomNav";
+import { alertSuccess, alertError } from "@/components/SweetAlert";
 import ShareProduct from "@/components/ShareProduct";
 import ShareAllProducts from "@/components/ShareAllProducts";
 
@@ -77,7 +78,7 @@ export default function KelolaProduk() {
   function handleFotoChange(e) {
     var file = e.target.files && e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert("Maks 5MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { alertError("Terlalu Besar", "Ukuran foto maksimal 5MB."); return; }
     setFotoFile(file);
     var reader = new FileReader();
     reader.onloadend = function() { setFotoPreview(reader.result); };
@@ -117,7 +118,7 @@ export default function KelolaProduk() {
         setProducts(function(p) { return [...p, { id: nd.id, ...d }]; });
       }
       reset();
-    } catch (e) { alert("Gagal simpan."); }
+    } catch (e) { alertError("Gagal", "Tidak bisa menyimpan produk."); }
     setSaving(false);
   }
 
