@@ -10,3 +10,4 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((p) => {
   self.registration.showNotification(p.notification.title, { body: p.notification.body, icon: '/icon-192.png' });
 });
+AIzaSyCr7BbmYQ42EtxkTJ9zP0iGtRsvxOVlIo8

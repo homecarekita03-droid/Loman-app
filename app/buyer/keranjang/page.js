@@ -156,3 +156,5 @@ export default function KeranjangPage() {
     </div>
   );
 }
+const pesan = notifTemplates.newOrder(toko.nama, daftarBarang, totalHarga, alamatUser);
+sendWA(toko.waPenjual, pesan);
