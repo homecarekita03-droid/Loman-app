@@ -1,3 +1,4 @@
+"use client";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
 import SweetAlertProvider from "@/components/SweetAlert";
@@ -37,3 +38,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
