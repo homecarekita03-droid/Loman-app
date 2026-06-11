@@ -1,4 +1,5 @@
-﻿import { useState } from 'react';
+﻿"use client";
+import { useState } from 'react';
 import { getMessaging, getToken } from "firebase/messaging";
 import { db, auth } from "../lib/firebase"; 
 import { doc, updateDoc } from "firebase/firestore";
@@ -10,8 +11,8 @@ export default function NotifButton() {
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        const messaging = getMessaging();
-        const token = await getToken(messaging, { vapidKey: 'BMPd5AdlH0nMWs5ud8OjuA0YAuspnGkgOciggnp6S55mvCBlaavRgMz8RpHVVcPaX_i7KJeKchSb_zaZ91H-kes' });
+        const { messaging } = await import('../lib/firebase');
+        const token = await getToken(messaging, { vapidKey: 'GANTI_VAPID_KEY_ANDA' });
         if (token && auth.currentUser) {
           await updateDoc(doc(db, "users", auth.currentUser.uid), { fcmToken: token });
           alert("✅ Notifikasi Aktif!");
@@ -21,8 +22,8 @@ export default function NotifButton() {
     setLoading(false);
   };
   return (
-    <button onClick={aktifkan} className="bg-orange-500 text-white p-3 rounded-xl w-full font-bold mb-4">
-      {loading ? "⌛ Loading..." : "🔔 Aktifkan Notifikasi HP"}
+    <button onClick={aktifkan} className="bg-orange-500 text-white p-3 rounded-xl w-full font-bold mb-4 shadow-lg">
+      {loading ? "⌛ Menghubungkan..." : "🔔 Aktifkan Notifikasi HP"}
     </button>
   );
 }
