@@ -53,11 +53,11 @@ export default function SellerDashboard() {
     var order = orders.find(function(o) { return o.id === id; });
     if (order && order.pembeliPhone) {
       var tName = store ? store.nama : "Toko";
-      var waUrl = null;
-      if (s === "confirmed") waUrl = notifPesananDiterima(order.pembeliPhone, tName);
-      if (s === "delivering") waUrl = notifPesananDikirim(order.pembeliPhone, tName);
-      if (s === "done") waUrl = notifPesananSelesai(order.pembeliPhone, tName);
-      if (waUrl) window.open(waUrl, "_blank");
+      var pesan = null;
+      if (s === "confirmed") pesan = notifPesananDiterima(tName);
+      if (s === "delivering") pesan = notifPesananDikirim(tName);
+      if (s === "done") pesan = notifPesananSelesai(tName);
+      if (pesan) sendWA(order.pembeliPhone, pesan);
     }
   }
 

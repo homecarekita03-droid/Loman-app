@@ -8,7 +8,6 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
 import { alertSuccess, alertError } from "@/components/SweetAlert";
-import { notifPesananBaru } from "@/lib/waNotif";
 
 export default function KeranjangPage() {
   const router = useRouter();
@@ -48,8 +47,8 @@ export default function KeranjangPage() {
             var tokoData = tokoDoc.data();
             var sellerPhone = tokoData.whatsapp || "";
             if (sellerPhone) {
-              var waUrl = notifPesananBaru(sellerPhone, userData?.nama || "Pembeli");
-              if (waUrl) window.open(waUrl, "_blank");
+              var pesan = notifTemplates.newOrder(userData?.nama || "Pembeli", g.items.map(i=>i.nama).join(", "), sub, userData?.alamat || "");
+              sendWA(sellerPhone, pesan);
             }
           }
         }
@@ -158,6 +157,4 @@ export default function KeranjangPage() {
     </div>
   );
 }
-const pesan = notifTemplates.newOrder(toko.nama, daftarBarang, totalHarga, alamatUser);
-sendWA(toko.waPenjual, pesan);
 
