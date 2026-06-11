@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, setDoc, onSnapshot } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
 import ChatRoom from "@/components/ChatRoom";
 import ChatList from "@/components/ChatList";
 import NotifPanel from "@/components/NotifPanel";
+import NotifButton from "@/components/NotifButton";
 
 export default function SellerDashboard() {
   const router = useRouter();
@@ -20,8 +21,12 @@ export default function SellerDashboard() {
   const [chatOrder, setChatOrder] = useState(null);
   const [showChatList, setShowChatList] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [showNotifSetup, setShowNotifSetup] = useState(false);
+  const prevOrderCount = useRef(0);
 
   useEffect(() => { if(!al&&!user) router.push("/login"); }, [user,al,router]);
+
+  // Fetch toko (one-time)
   useEffect(() => {
     async function f() {
       if(!user) return;
@@ -33,16 +38,36 @@ export default function SellerDashboard() {
           const ns = { nama:"Toko "+(userData?.nama||"Saya"), pemilikId:user.uid, kategori:"makanan", deskripsi:"", alamat:userData?.alamat||"", jamBuka:"08:00", jamTutup:"20:00", emoji:"🏪", rating:0, isOpen:true, createdAt:new Date().toISOString() };
           await setDoc(nr,ns); setStore({id:nr.id,...ns}); sid=nr.id;
         } else { setStore({id:sq.docs[0].id,...sq.docs[0].data()}); sid=sq.docs[0].id; }
-        const os = await getDocs(query(collection(db,"pesanan"),where("tokoId","==",sid)));
-        const ol = os.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-        setOrders(ol);
-        const td = new Date().toDateString();
-        const to = ol.filter(o=>new Date(o.createdAt).toDateString()===td);
-        setStats({ today:to.length, revenue:to.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+(o.totalHarga||0),0) });
       } catch(e){console.error(e);}
       setLoading(false);
     } f();
   }, [user,userData]);
+
+  // Real-time listener untuk pesanan
+  useEffect(() => {
+    if (!store?.id) return;
+    const q = query(collection(db,"pesanan"),where("tokoId","==",store.id));
+    const unsub = onSnapshot(q, (snap) => {
+      const ol = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+      setOrders(ol);
+
+      // Deteksi pesanan baru
+      const newPending = ol.filter(o=>o.status==="pending").length;
+      if (prevOrderCount.current > 0 && ol.length > prevOrderCount.current) {
+        // Ada pesanan baru! Bunyikan notifikasi
+        try {
+          // Vibrate
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+          // Sound
+          const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkI+Hf3V2goqOjomDe3Z5g4uQj4mCeXR4gYqNjYiBenV5gYqNjYiBenV5gYqNjYiBenV5gYqNjYg=");
+          audio.volume = 0.3;
+          audio.play().catch(()=>{});
+        } catch(e){}
+      }
+      prevOrderCount.current = ol.length;
+    });
+    return () => unsub();
+  }, [store?.id]);
 
   async function toggleStore() { if(!store)return; const n=!store.isOpen; await updateDoc(doc(db,"toko",store.id),{isOpen:n}); setStore(p=>({...p,isOpen:n})); }
   async function updateStatus(id, s) {
@@ -96,6 +121,26 @@ export default function SellerDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Banner Notifikasi HP */}
+      {!userData?.notifEnabled && (
+        <div style={{ padding:"12px 20px 0" }}>
+          <div style={{
+            background:"linear-gradient(135deg, #fef3c7, #fde68a)",
+            borderRadius:"16px", padding:"16px",
+            border:"2px solid #f59e0b",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"10px" }}>
+              <span style={{ fontSize:"24px" }}>🔔</span>
+              <div>
+                <p style={{ fontSize:"14px", fontWeight:700, color:"#92400e" }}>Aktifkan Notifikasi HP!</p>
+                <p style={{ fontSize:"12px", color:"#a16207" }}>Dapat notif pesanan masuk walau HP terkunci</p>
+              </div>
+            </div>
+            <NotifButton />
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div style={{ padding:"16px 20px 0", display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:"8px" }}>

@@ -42,7 +42,7 @@ export default function NotifButton() {
 
       const messaging = getMessaging(app);
       const token = await getToken(messaging, {
-        vapidKey: "BF4jHclXSCbN2vV0kgbQk0bDrBfeKaX_xXZBd32SqCMN3q5Cr8MaTZZGgnSvHXpWdpSrnptobVY8h2bo7ItblFA",
+        vapidKey: "BMPd5AdlH0nMWs5ud8OjuA0YAuspnGkgOciggnp6S55mvCBlaavRgMz8RpHVVcPaX_i7KJeKchSb_zaZ91H-kes",
         serviceWorkerRegistration: swReg,
       });
 
