@@ -1,13 +1,48 @@
-﻿importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
+// Loman Service Worker - Push Notification Handler
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
 firebase.initializeApp({
-  apiKey: "ISI_API_KEY",
+  apiKey: "AIzaSyCr7BbmYQ42EtxkTJ9zP0iGtRsvxOVlIo8",
+  authDomain: "loman-app.firebaseapp.com",
   projectId: "loman-app",
-  messagingSenderId: "ISI_SENDER_ID",
-  appId: "ISI_APP_ID"
+  storageBucket: "loman-app.appspot.com",
+  messagingSenderId: "642027415706",
+  appId: "1:642027415706:web:0c0f7f49133183ab405723"
 });
+
 const messaging = firebase.messaging();
-messaging.onBackgroundMessage((p) => {
-  self.registration.showNotification(p.notification.title, { body: p.notification.body, icon: '/icon-192.png' });
+
+// Handle background messages (saat app tidak dibuka)
+messaging.onBackgroundMessage(function(payload) {
+  console.log('[SW] Background message:', payload);
+  var notification = payload.notification || {};
+  self.registration.showNotification(notification.title || 'Loman', {
+    body: notification.body || 'Ada update baru!',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: notification.tag || 'loman-notif',
+    data: payload.data || {},
+    actions: [
+      { action: 'open', title: 'Buka Loman' }
+    ]
+  });
 });
-AIzaSyCr7BbmYQ42EtxkTJ9zP0iGtRsvxOVlIo8
+
+// Handle notification click
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      // Jika sudah ada window yang terbuka, fokus ke situ
+      for (var i = 0; i < clientList.length; i++) {
+        var client = clientList[i];
+        if (client.url.includes('loman') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Jika tidak ada, buka baru
+      return clients.openWindow('/');
+    })
+  );
+});
