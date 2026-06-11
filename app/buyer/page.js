@@ -323,3 +323,7 @@ export default function BuyerHome() {
     </div>
   );
 }
+import NotifButton from '@/components/NotifButton';
+
+// Di dalam return:
+<NotifButton />
