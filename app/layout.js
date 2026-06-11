@@ -7,6 +7,10 @@ export const metadata = {
   title: "Loman - Local Market Nusantara",
   description: "Belanja Setetangga — Marketplace UMKM Perumahan",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/icon-192.png",
+  },
 };
 
 export const viewport = {
@@ -19,6 +23,10 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="id">
+      <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body className="antialiased">
         <AuthProvider>
           {children}
