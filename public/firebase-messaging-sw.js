@@ -1,4 +1,4 @@
-// Loman Service Worker - Push Notification
+// Loman Service Worker
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
@@ -11,59 +11,66 @@ firebase.initializeApp({
   appId: "1:642027415706:web:0c0f7f49133183ab405723"
 });
 
-self.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+// Push notification handler
+self.addEventListener('push', function(event) {
+  if (!event.data) return;
+  try {
+    var data = event.data.json();
+    var title = 'Pesanan Baru!';
+    var body = 'Ada pesanan baru di Loman';
+    var icon = 'https://loman.store/icon-192.png';
+
+    if (data.notification) {
+      title = data.notification.title || title;
+      body = data.notification.body || body;
+    }
+    if (data.webpush && data.webpush.notification) {
+      if (data.webpush.notification.icon) icon = data.webpush.notification.icon;
+    }
+
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body: body,
+        icon: icon,
+        badge: icon,
+        vibrate: [300, 100, 300, 100, 300],
+        requireInteraction: true,
+        tag: 'loman-' + Date.now(),
+      })
+    );
+  } catch (e) {
+    // Fallback jika parsing gagal
+    event.waitUntil(
+      self.registration.showNotification('Pesanan Baru!', {
+        body: 'Ada pesanan baru di Loman',
+        icon: 'https://loman.store/icon-192.png',
+        vibrate: [300, 100, 300, 100, 300],
+      })
+    );
   }
 });
 
-self.addEventListener('activate', function(event) {
-  event.waitUntil(self.clients.claim());
-});
-
-// Handle push notification langsung
-self.addEventListener('push', function(event) {
-  if (!event.data) return;
-  var data = event.data.json();
-  var n = data.notification || {};
-  event.waitUntil(
-    self.registration.showNotification(n.title || '🛒 Pesanan Baru!', {
-      body: n.body || 'Ada pesanan baru di Loman',
-      icon: '/notif-icon.png',
-      badge: '/notif-icon.png',
-      image: '/notif-icon.png',
-      tag: 'loman-' + Date.now(),
-      requireInteraction: true,
+// Firebase background messaging (backup)
+try {
+  var messaging = firebase.messaging();
+  messaging.onBackgroundMessage(function(payload) {
+    var n = payload.notification || {};
+    self.registration.showNotification(n.title || 'Pesanan Baru!', {
+      body: n.body || 'Ada pesanan baru',
+      icon: 'https://loman.store/icon-192.png',
       vibrate: [300, 100, 300, 100, 300],
-      data: data.data || {},
-    })
-  );
-});
-
-// Backup via Firebase messaging
-var messaging = firebase.messaging();
-messaging.onBackgroundMessage(function(payload) {
-  var n = payload.notification || {};
-  self.registration.showNotification(n.title || '🛒 Pesanan Baru!', {
-    body: n.body || 'Ada pesanan baru di Loman',
-    icon: '/notif-icon.png',
-    badge: '/notif-icon.png',
-    tag: 'loman-' + Date.now(),
-    requireInteraction: true,
-    vibrate: [300, 100, 300, 100, 300],
-    data: payload.data || {},
+      requireInteraction: true,
+    });
   });
-});
+} catch (e) {}
 
-// Handle notification click
+// Klik notifikasi → buka Loman
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-      for (var i = 0; i < clientList.length; i++) {
-        if ('focus' in clientList[i]) return clientList[i].focus();
-      }
-      return clients.openWindow('/');
-    })
-  );
+  event.waitUntil(clients.openWindow('https://loman.store'));
+});
+
+// Skip waiting
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });

@@ -13,8 +13,7 @@ exports.notifPesananBaru = onDocumentCreated("pesanan/{orderId}", async (event) 
   const tokoId = order.tokoId;
   const pembeliNama = order.pembeliNama || "Pembeli";
   const totalHarga = order.totalHarga || 0;
-  const itemCount = order.items?.length || 0;
-  const itemNames = (order.items || []).map(i => i.nama).join(", ");
+  const itemCount = (order.items || []).length;
 
   try {
     const tokoSnap = await db.doc("toko/" + tokoId).get();
@@ -26,32 +25,25 @@ exports.notifPesananBaru = onDocumentCreated("pesanan/{orderId}", async (event) 
     const fcmToken = userSnap.data().fcmToken;
     if (!fcmToken) return;
 
+    // Kirim notifikasi — format paling simpel
     await getMessaging().send({
       token: fcmToken,
       notification: {
-        title: "🛒 Pesanan Baru!",
-        body: pembeliNama + " pesan " + itemCount + " item (" + itemNames + ") — Rp " + totalHarga.toLocaleString("id"),
-        imageUrl: "https://loman.store/notif-icon.png",
+        title: "Pesanan Baru!",
+        body: pembeliNama + " pesan " + itemCount + " item - Rp " + totalHarga.toLocaleString("id"),
+      },
+      android: {
+        priority: "high",
       },
       webpush: {
         headers: { Urgency: "high" },
         notification: {
-          title: "🛒 Pesanan Baru!",
-          body: pembeliNama + " pesan " + itemCount + " item (" + itemNames + ") — Rp " + totalHarga.toLocaleString("id"),
-          icon: "https://loman.store/notif-icon.png",
-          badge: "https://loman.store/notif-icon.png",
-          image: "https://loman.store/notif-icon.png",
-          tag: "pesanan-" + event.params.orderId,
+          title: "Pesanan Baru!",
+          body: pembeliNama + " pesan " + itemCount + " item - Rp " + totalHarga.toLocaleString("id"),
+          icon: "https://loman.store/icon-192.png",
+          badge: "https://loman.store/icon-192.png",
           requireInteraction: true,
           vibrate: [300, 100, 300, 100, 300],
-        },
-      },
-      android: {
-        priority: "high",
-        notification: {
-          channelId: "loman-orders",
-          sound: "default",
-          icon: "loman",
         },
       },
     });
