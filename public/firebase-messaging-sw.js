@@ -11,21 +11,35 @@ firebase.initializeApp({
   appId: "1:642027415706:web:0c0f7f49133183ab405723"
 });
 
-const messaging = firebase.messaging();
+// Handle skip waiting
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
-// Handle background messages (saat app tidak dibuka)
+// Activate immediately
+self.addEventListener('activate', function(event) {
+  event.waitUntil(self.clients.claim());
+});
+
+// Handle background messages
+var messaging = firebase.messaging();
 messaging.onBackgroundMessage(function(payload) {
-  console.log('[SW] Background message:', payload);
+  console.log('[SW] Background message received:', payload);
   var notification = payload.notification || {};
-  self.registration.showNotification(notification.title || 'Loman', {
-    body: notification.body || 'Ada update baru!',
-    icon: '/icon-192.png',
+  var title = notification.title || 'Loman';
+  var body = notification.body || 'Ada update baru!';
+  var icon = notification.icon || '/icon-192.png';
+
+  return self.registration.showNotification(title, {
+    body: body,
+    icon: icon,
     badge: '/icon-192.png',
-    tag: notification.tag || 'loman-notif',
-    data: payload.data || {},
-    actions: [
-      { action: 'open', title: 'Buka Loman' }
-    ]
+    tag: 'loman-' + Date.now(),
+    requireInteraction: true,
+    vibrate: [200, 100, 200, 100, 200],
+    data: payload.data || {}
   });
 });
 
@@ -34,14 +48,12 @@ self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-      // Jika sudah ada window yang terbuka, fokus ke situ
       for (var i = 0; i < clientList.length; i++) {
         var client = clientList[i];
-        if (client.url.includes('loman') && 'focus' in client) {
+        if ('focus' in client) {
           return client.focus();
         }
       }
-      // Jika tidak ada, buka baru
       return clients.openWindow('/');
     })
   );
