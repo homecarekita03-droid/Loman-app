@@ -23,6 +23,32 @@ export default function SellerDashboard() {
   const isFirstLoad = useRef(true);
   const lastOrderId = useRef(null);
 
+  // Foreground notification: saat app terbuka, tampilkan notifikasi
+  useEffect(() => {
+    if (!user) return;
+    let unsubMessage = null;
+    (async () => {
+      try {
+        const { getMessaging, onMessage } = await import("firebase/messaging");
+        const { app } = await import("@/lib/firebase");
+        const messaging = getMessaging(app);
+        unsubMessage = onMessage(messaging, (payload) => {
+          // Tampilkan notifikasi di browser
+          var notification = payload.notification || {};
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(notification.title || "Loman", {
+              body: notification.body || "Ada pesanan baru!",
+              icon: "/icon-192.png",
+              tag: "loman-foreground",
+              vibrate: [300, 100, 300, 100, 300],
+            });
+          }
+        });
+      } catch (e) { console.log("Foreground notif error:", e); }
+    })();
+    return () => { if (unsubMessage) unsubMessage(); };
+  }, [user]);
+
   // Redirect jika belum login
   useEffect(() => {
     if (!al && !user) router.push("/login");
@@ -197,31 +223,10 @@ export default function SellerDashboard() {
         </div>
       </div>
 
-      {/* ===== BANNER NOTIFIKASI HP ===== */}
-      {!userData?.notifEnabled && (
-        <div style={{ padding: "12px 20px 0" }}>
-          <div style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderRadius: "16px", padding: "16px", border: "2px solid #f59e0b" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-              <span style={{ fontSize: "24px" }}>🔔</span>
-              <div>
-                <p style={{ fontSize: "14px", fontWeight: 700, color: "#92400e" }}>Aktifkan Notifikasi HP!</p>
-                <p style={{ fontSize: "12px", color: "#a16207" }}>Dapat notif pesanan masuk walau HP terkunci</p>
-              </div>
-            </div>
-            <NotifButton />
-          </div>
-        </div>
-      )}
-
-      {/* Status notif aktif */}
-      {userData?.notifEnabled && (
-        <div style={{ padding: "12px 20px 0" }}>
-          <div style={{ background: "#f0fdf4", borderRadius: "12px", padding: "10px 14px", display: "flex", alignItems: "center", gap: "8px" }}>
-            <span>✅</span>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#065f46" }}>Notifikasi HP Aktif</span>
-          </div>
-        </div>
-      )}
+      {/* ===== NOTIFIKASI HP (selalu tampil, ON/OFF) ===== */}
+      <div style={{ padding: "12px 20px 0" }}>
+        <NotifButton />
+      </div>
 
       {/* ===== QUICK ACTIONS ===== */}
       <div style={{ padding: "16px 20px 0", display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>

@@ -1,13 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db, auth } from "@/lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
 
 export default function NotifButton() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const { setUserData } = useAuth();
+  const { userData, setUserData } = useAuth();
+
+  // Cek status notifikasi dari browser + Firestore
+  const [notifPermission, setNotifPermission] = useState("default");
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  const isActive = userData?.notifEnabled && notifPermission === "granted";
 
   const aktifkan = async () => {
     setLoading(true);
@@ -20,15 +31,11 @@ export default function NotifButton() {
         return;
       }
 
-      if (!("serviceWorker" in navigator)) {
-        setResult({ type: "error", msg: "Service Worker tidak didukung." });
-        setLoading(false);
-        return;
-      }
-
       const permission = await Notification.requestPermission();
+      setNotifPermission(permission);
+
       if (permission !== "granted") {
-        setResult({ type: "error", msg: "Izin notifikasi ditolak. Aktifkan di Pengaturan HP → Aplikasi → Chrome → Notifikasi." });
+        setResult({ type: "error", msg: "Izin notifikasi ditolak. Aktifkan di: Pengaturan HP → Aplikasi → Chrome → Notifikasi → Izinkan." });
         setLoading(false);
         return;
       }
@@ -50,45 +57,69 @@ export default function NotifButton() {
       });
 
       if (token && auth.currentUser) {
-        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        // Simpan ke Firestore (pakai setDoc merge supaya aman)
+        await setDoc(doc(db, "users", auth.currentUser.uid), {
           fcmToken: token,
           notifEnabled: true,
           notifEnabledAt: new Date().toISOString(),
-        });
-        // Update local state supaya banner hilang tanpa refresh
+        }, { merge: true });
+
+        // Update local state
         setUserData(prev => ({ ...prev, notifEnabled: true, fcmToken: token }));
         setResult({ type: "success", msg: "Notifikasi HP aktif! HP akan bergetar + notifikasi muncul di layar saat pesanan masuk." });
-      } else if (!token) {
+      } else {
         setResult({ type: "error", msg: "Gagal mendapatkan token. Coba restart browser." });
       }
     } catch (e) {
       console.error("Notif error:", e);
-      let errMsg = "Gagal: " + e.message;
-      if (e.message.includes("VAPID")) errMsg = "VAPID key tidak valid. Generate di Firebase Console → Cloud Messaging → Web Push certificates.";
-      else if (e.message.includes("permission")) errMsg = "Izin notifikasi diblokir. Buka Pengaturan HP → Chrome → Notifikasi → Izinkan.";
-      setResult({ type: "error", msg: errMsg });
+      setResult({ type: "error", msg: "Gagal: " + e.message });
     }
     setLoading(false);
   };
 
-  // Tombol ON/OFF
-  const { userData } = useAuth();
-  const isActive = userData?.notifEnabled;
+  const matikan = async () => {
+    setLoading(true);
+    try {
+      if (auth.currentUser) {
+        await setDoc(doc(db, "users", auth.currentUser.uid), {
+          notifEnabled: false,
+          fcmToken: null,
+        }, { merge: true });
+        setUserData(prev => ({ ...prev, notifEnabled: false, fcmToken: null }));
+      }
+      setResult(null);
+    } catch (e) {
+      console.error(e);
+    }
+    setLoading(false);
+  };
 
-  if (isActive && result?.type !== "error") {
+  // ===== TAMPILAN AKTIF (ON) =====
+  if (isActive) {
     return (
       <div style={{
         background: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
-        padding: "14px", borderRadius: "14px", textAlign: "center",
+        padding: "14px", borderRadius: "14px",
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-          <span style={{ fontSize: "18px" }}>✅</span>
-          <span style={{ fontSize: "14px", fontWeight: 700, color: "#065f46" }}>Notifikasi HP Aktif</span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "18px" }}>✅</span>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "#065f46" }}>Notifikasi HP Aktif</span>
+          </div>
+          <button onClick={matikan} disabled={loading} style={{
+            padding: "6px 12px", borderRadius: "8px",
+            background: "white", border: "1px solid #a7f3d0",
+            fontSize: "12px", fontWeight: 600, color: "#065f46",
+            cursor: "pointer",
+          }}>
+            {loading ? "..." : "Matikan"}
+          </button>
         </div>
       </div>
     );
   }
 
+  // ===== TAMPILAN NONAKTIF (OFF) =====
   return (
     <div>
       <button onClick={aktifkan} disabled={loading} style={{
