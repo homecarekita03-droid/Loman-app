@@ -21,47 +21,37 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(self.clients.claim());
 });
 
-// Handle push notification LANGSUNG dari push event (paling reliable)
+// Handle push notification langsung
 self.addEventListener('push', function(event) {
   if (!event.data) return;
-
   var data = event.data.json();
-  var notification = data.notification || {};
-  var title = notification.title || 'Loman';
-  var body = notification.body || 'Ada pesanan baru!';
-  var icon = notification.icon || '/icon-192.png';
-
+  var n = data.notification || {};
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body: body,
-      icon: icon,
-      badge: '/icon-192.png',
+    self.registration.showNotification(n.title || '🛒 Pesanan Baru!', {
+      body: n.body || 'Ada pesanan baru di Loman',
+      icon: '/notif-icon.png',
+      badge: '/notif-icon.png',
+      image: '/notif-icon.png',
       tag: 'loman-' + Date.now(),
       requireInteraction: true,
       vibrate: [300, 100, 300, 100, 300],
       data: data.data || {},
-      actions: [
-        { action: 'open', title: 'Buka Loman' }
-      ]
     })
   );
 });
 
-// Juga handle via Firebase messaging (backup)
+// Backup via Firebase messaging
 var messaging = firebase.messaging();
 messaging.onBackgroundMessage(function(payload) {
-  var notification = payload.notification || {};
-  self.registration.showNotification(notification.title || 'Loman', {
-    body: notification.body || 'Ada pesanan baru!',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+  var n = payload.notification || {};
+  self.registration.showNotification(n.title || '🛒 Pesanan Baru!', {
+    body: n.body || 'Ada pesanan baru di Loman',
+    icon: '/notif-icon.png',
+    badge: '/notif-icon.png',
     tag: 'loman-' + Date.now(),
     requireInteraction: true,
     vibrate: [300, 100, 300, 100, 300],
     data: payload.data || {},
-    actions: [
-      { action: 'open', title: 'Buka Loman' }
-    ]
   });
 });
 
@@ -71,10 +61,7 @@ self.addEventListener('notificationclick', function(event) {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
       for (var i = 0; i < clientList.length; i++) {
-        var client = clientList[i];
-        if ('focus' in client) {
-          return client.focus();
-        }
+        if ('focus' in clientList[i]) return clientList[i].focus();
       }
       return clients.openWindow('/');
     })

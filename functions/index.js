@@ -17,35 +17,33 @@ exports.notifPesananBaru = onDocumentCreated("pesanan/{orderId}", async (event) 
   const itemNames = (order.items || []).map(i => i.nama).join(", ");
 
   try {
-    // Ambil data toko → ambil pemilikId
     const tokoSnap = await db.doc("toko/" + tokoId).get();
     if (!tokoSnap.exists) return;
     const pemilikId = tokoSnap.data().pemilikId;
 
-    // Ambil FCM token seller
     const userSnap = await db.doc("users/" + pemilikId).get();
     if (!userSnap.exists) return;
     const fcmToken = userSnap.data().fcmToken;
     if (!fcmToken) return;
 
-    // Kirim push notification
     await getMessaging().send({
       token: fcmToken,
       notification: {
-        title: "🛒 Pesanan Baru dari " + pembeliNama,
-        body: itemCount + " item: " + itemNames + " — Rp " + totalHarga.toLocaleString("id"),
+        title: "🛒 Pesanan Baru!",
+        body: pembeliNama + " pesan " + itemCount + " item (" + itemNames + ") — Rp " + totalHarga.toLocaleString("id"),
+        imageUrl: "https://loman.store/notif-icon.png",
       },
       webpush: {
         headers: { Urgency: "high" },
         notification: {
-          icon: "/icon-192.png",
-          badge: "/icon-192.png",
+          title: "🛒 Pesanan Baru!",
+          body: pembeliNama + " pesan " + itemCount + " item (" + itemNames + ") — Rp " + totalHarga.toLocaleString("id"),
+          icon: "https://loman.store/notif-icon.png",
+          badge: "https://loman.store/notif-icon.png",
+          image: "https://loman.store/notif-icon.png",
           tag: "pesanan-" + event.params.orderId,
           requireInteraction: true,
           vibrate: [300, 100, 300, 100, 300],
-          actions: [
-            { action: "open", title: "Buka Loman" },
-          ],
         },
       },
       android: {
@@ -53,7 +51,7 @@ exports.notifPesananBaru = onDocumentCreated("pesanan/{orderId}", async (event) 
         notification: {
           channelId: "loman-orders",
           sound: "default",
-          clickAction: "FLUTTER_NOTIFICATION_CLICK",
+          icon: "loman",
         },
       },
     });
