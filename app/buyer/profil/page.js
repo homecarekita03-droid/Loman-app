@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import BottomNav from "@/components/BottomNav";
+import NotifButton from "@/components/NotifButton";
 import { alertError, alertConfirm } from "@/components/SweetAlert";
 
 export default function ProfilPage() {
@@ -121,6 +122,12 @@ export default function ProfilPage() {
             <button onClick={()=>setEditing(true)} style={{ width:"100%", padding:"14px", borderRadius:"14px", border:"2px solid #f59e0b", background:"white", fontWeight:700, fontSize:"15px", color:"#f59e0b", cursor:"pointer", marginTop:"4px" }}>✏️ Edit Profil</button>
           </div>
         )}
+
+        {/* Notifikasi HP */}
+        <div style={{ marginTop:"16px" }}>
+          <p style={{ fontSize:"12px", color:"#9ca3af", marginBottom:"8px", textAlign:"center" }}>🔔 Notifikasi HP (Android/Chrome)</p>
+          <NotifButton />
+        </div>
 
         <div style={{ marginTop:"20px", display:"flex", flexDirection:"column", gap:"8px" }}>
           <button onClick={switchRole} style={{ width:"100%", padding:"14px", borderRadius:"14px", background:"white", border:"1px solid #e5e7eb", fontWeight:600, fontSize:"14px", color:"#374151", cursor:"pointer" }}>🔄 Ganti ke {role==="seller"?"Pembeli":"Penjual"}</button>
