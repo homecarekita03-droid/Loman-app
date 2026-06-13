@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { db, storage } from "@/lib/firebase";
+import { collection, getDocs, query, where, doc, deleteDoc, updateDoc, addDoc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // ⚠️ GANTI DENGAN EMAIL GOOGLE ANDA (yang login sebagai admin)
 const ADMIN_EMAILS = ["homecarekita03@gmail.com"]; // Tambahkan email admin di sini
@@ -99,20 +100,20 @@ function DibantuUploadTab({ stores, setStores, products, setProducts }) {
   return (
     <div>
       <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-        <div style={{ flex: 1, padding: "10px", borderRadius: "10px", background: step >= 1 ? "#f59e0b" : "rgba(255,255,255,0.04)", color: step >= 1 ? "#1f2937" : "#64748b", textAlign: "center", fontSize: "13px", fontWeight: 700 }}>1️⃣ Info Penjual</div>
+        <div style={{ flex: 1, padding: "10px", borderRadius: "10px", background: step >= 1 ? "#f59e0b" : "rgba(255,255,255,0.04)", color: step >= 1 ? "#1f2937" : "#64748b", textAlign: "center", fontSize: "13px", fontWeight: 700 }}>1️⃣ Info Mitra</div>
         <div style={{ flex: 1, padding: "10px", borderRadius: "10px", background: step >= 2 ? "#f59e0b" : "rgba(255,255,255,0.04)", color: step >= 2 ? "#1f2937" : "#64748b", textAlign: "center", fontSize: "13px", fontWeight: 700 }}>2️⃣ Tambah Produk</div>
       </div>
       {msg && <div style={{ padding: "12px", borderRadius: "10px", marginBottom: "16px", background: msg.includes("✅") ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: "1px solid " + (msg.includes("✅") ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)") }}><p style={{ fontSize: "13px", color: msg.includes("✅") ? "#34d399" : "#f87171" }}>{msg}</p></div>}
 
       {step === 1 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <h3 style={{ fontSize: "16px", fontWeight: 700 }}>📝 Data Penjual & Toko</h3>
+          <h3 style={{ fontSize: "16px", fontWeight: 700 }}>📝 Data Mitra & Toko</h3>
           <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Nama Toko *</label><input value={sellerForm.nama} onChange={e => setSellerForm(f => ({ ...f, nama: e.target.value }))} placeholder="Dapur Bu Sari" style={inputStyle} /></div>
           <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>No. WhatsApp *</label><input value={sellerForm.phone} onChange={e => setSellerForm(f => ({ ...f, phone: e.target.value }))} placeholder="08xxx" style={inputStyle} /></div>
           <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Perumahan</label><input value={sellerForm.perumahan} onChange={e => setSellerForm(f => ({ ...f, perumahan: e.target.value }))} placeholder="Griya Indah" style={inputStyle} /></div>
           <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Alamat (Blok/No)</label><input value={sellerForm.alamat} onChange={e => setSellerForm(f => ({ ...f, alamat: e.target.value }))} placeholder="Blok A5 No. 12" style={inputStyle} /></div>
           <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Kategori</label><select value={sellerForm.kategori} onChange={e => setSellerForm(f => ({ ...f, kategori: e.target.value }))} style={inputStyle}>{kategoriList.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}</select></div>
-          <button onClick={buatSeller} disabled={saving} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: saving ? "#475569" : "linear-gradient(135deg, #f59e0b, #ea580c)", color: "white", border: "none", fontWeight: 700, fontSize: "15px", cursor: saving ? "default" : "pointer", marginTop: "8px" }}>{saving ? "⏳ Membuat..." : "🏪 Buat Toko & Lanjut"}</button>
+          <button onClick={buatSeller} disabled={saving} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: saving ? "#475569" : "linear-gradient(135deg, #f59e0b, #ea580c)", color: "white", border: "none", fontWeight: 700, fontSize: "15px", cursor: saving ? "default" : "pointer", marginTop: "8px" }}>{saving ? "⏳ Mendaftarkan..." : "🤝 Daftarkan Mitra"}</button>
         </div>
       )}
 
@@ -237,7 +238,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: "overview", icon: "📊", label: "Overview" },
-    { id: "dibantu", icon: "🚀", label: "Dibantu Upload" },
+    { id: "dibantu", icon: "🤝", label: "Daftarkan Mitra" },
     { id: "users", icon: "👥", label: "Users (" + stats.users + ")" },
     { id: "stores", icon: "🏪", label: "Toko (" + stats.stores + ")" },
     { id: "orders", icon: "📦", label: "Pesanan (" + stats.orders + ")" },
