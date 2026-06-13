@@ -8,6 +8,134 @@ import { collection, getDocs, query, where, doc, deleteDoc, updateDoc } from "fi
 // ⚠️ GANTI DENGAN EMAIL GOOGLE ANDA (yang login sebagai admin)
 const ADMIN_EMAILS = ["homecarekita03@gmail.com"]; // Tambahkan email admin di sini
 
+// ===== KOMPONEN DIBANTU UPLOAD =====
+function DibantuUploadTab({ stores, setStores, products, setProducts }) {
+  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [storeId, setStoreId] = useState(null);
+  const [sellerForm, setSellerForm] = useState({ nama: "", phone: "", perumahan: "", alamat: "", kategori: "makanan" });
+  const [produkForm, setProdukForm] = useState({ nama: "", harga: "", deskripsi: "", emoji: "🍚", kategori: "makanan" });
+  const [fotoFile, setFotoFile] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+  const [produkList, setProdukList] = useState([]);
+
+  const emojiList = ["🍚","🍜","🍗","🥘","🧁","🍰","🥤","☕","🧃","👕","🧴","📦","🥬","🍳","🥗","🍲","🍕","🍔","🌮","🥪","🍱"];
+  const kategoriList = [
+    { value: "makanan", label: "🍚 Makanan" }, { value: "minuman", label: "🥤 Minuman" },
+    { value: "kue", label: "🧁 Kue & Snack" }, { value: "kebutuhan_pokok", label: "🛒 Sembako" },
+    { value: "kelontong", label: "🏪 Kelontong" }, { value: "frozen_food", label: "🧊 Frozen Food" },
+    { value: "laundry", label: "👕 Laundry" }, { value: "fashion", label: "👗 Fashion" },
+    { value: "sayuran", label: "🥬 Sayuran" }, { value: "catering", label: "🍱 Catering" },
+    { value: "lainnya", label: "📦 Lainnya" },
+  ];
+
+  async function buatSeller() {
+    if (!sellerForm.nama || !sellerForm.phone) { setMsg("❌ Nama dan No. WA wajib diisi!"); return; }
+    setSaving(true); setMsg("");
+    try {
+      const tokoRef = doc(collection(db, "toko"));
+      const tokoData = {
+        nama: sellerForm.nama, pemilikId: "admin-" + tokoRef.id, kategori: sellerForm.kategori,
+        deskripsi: "", alamat: sellerForm.alamat, perumahan: sellerForm.perumahan,
+        whatsapp: sellerForm.phone, jamBuka: "08:00", jamTutup: "20:00", emoji: "🏪",
+        rating: 0, isOpen: true, createdAt: new Date().toISOString(),
+        dibantuUpload: true, sellerName: sellerForm.nama, sellerPhone: sellerForm.phone,
+      };
+      await setDoc(tokoRef, tokoData);
+      setStoreId(tokoRef.id);
+      setStores(prev => [...prev, { id: tokoRef.id, ...tokoData }]);
+      setMsg("✅ Toko berhasil dibuat! Sekarang tambahkan produk.");
+      setStep(2);
+    } catch (e) { setMsg("❌ Gagal: " + e.message); }
+    setSaving(false);
+  }
+
+  function handleFoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setMsg("❌ Foto max 5MB"); return; }
+    setFotoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setFotoPreview(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function tambahProduk() {
+    if (!produkForm.nama || !produkForm.harga) { setMsg("❌ Nama dan harga wajib!"); return; }
+    setSaving(true); setMsg("");
+    try {
+      let fotoUrl = null;
+      if (fotoFile) {
+        const fn = Date.now() + "_" + fotoFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
+        const storageRef = ref(storage, "produk/" + fn);
+        await uploadBytes(storageRef, fotoFile);
+        fotoUrl = await getDownloadURL(storageRef);
+      }
+      const produkData = {
+        tokoId: storeId, nama: produkForm.nama.trim(), harga: parseInt(produkForm.harga),
+        deskripsi: produkForm.deskripsi.trim(), emoji: produkForm.emoji,
+        kategori: produkForm.kategori, tersedia: true, createdAt: new Date().toISOString(),
+      };
+      if (fotoUrl) produkData.foto = fotoUrl;
+      const newDoc = await addDoc(collection(db, "produk"), produkData);
+      setProdukList(prev => [...prev, { id: newDoc.id, ...produkData }]);
+      setProducts(prev => [...prev, { id: newDoc.id, ...produkData }]);
+      setProdukForm({ nama: "", harga: "", deskripsi: "", emoji: "🍚", kategori: "makanan" });
+      setFotoFile(null); setFotoPreview(null);
+      setMsg("✅ \"" + produkForm.nama + "\" ditambahkan!");
+    } catch (e) { setMsg("❌ Gagal: " + e.message); }
+    setSaving(false);
+  }
+
+  function selesai() {
+    setStep(1); setStoreId(null);
+    setSellerForm({ nama: "", phone: "", perumahan: "", alamat: "", kategori: "makanan" });
+    setProdukList([]); setMsg("✅ Selesai! Toko & produk sudah tayang.");
+  }
+
+  const inputStyle = { width: "100%", padding: "12px 14px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", fontSize: "14px", outline: "none", background: "rgba(255,255,255,0.05)", color: "#e2e8f0" };
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+        <div style={{ flex: 1, padding: "10px", borderRadius: "10px", background: step >= 1 ? "#f59e0b" : "rgba(255,255,255,0.04)", color: step >= 1 ? "#1f2937" : "#64748b", textAlign: "center", fontSize: "13px", fontWeight: 700 }}>1️⃣ Info Penjual</div>
+        <div style={{ flex: 1, padding: "10px", borderRadius: "10px", background: step >= 2 ? "#f59e0b" : "rgba(255,255,255,0.04)", color: step >= 2 ? "#1f2937" : "#64748b", textAlign: "center", fontSize: "13px", fontWeight: 700 }}>2️⃣ Tambah Produk</div>
+      </div>
+      {msg && <div style={{ padding: "12px", borderRadius: "10px", marginBottom: "16px", background: msg.includes("✅") ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: "1px solid " + (msg.includes("✅") ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)") }}><p style={{ fontSize: "13px", color: msg.includes("✅") ? "#34d399" : "#f87171" }}>{msg}</p></div>}
+
+      {step === 1 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 700 }}>📝 Data Penjual & Toko</h3>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Nama Toko *</label><input value={sellerForm.nama} onChange={e => setSellerForm(f => ({ ...f, nama: e.target.value }))} placeholder="Dapur Bu Sari" style={inputStyle} /></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>No. WhatsApp *</label><input value={sellerForm.phone} onChange={e => setSellerForm(f => ({ ...f, phone: e.target.value }))} placeholder="08xxx" style={inputStyle} /></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Perumahan</label><input value={sellerForm.perumahan} onChange={e => setSellerForm(f => ({ ...f, perumahan: e.target.value }))} placeholder="Griya Indah" style={inputStyle} /></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Alamat (Blok/No)</label><input value={sellerForm.alamat} onChange={e => setSellerForm(f => ({ ...f, alamat: e.target.value }))} placeholder="Blok A5 No. 12" style={inputStyle} /></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Kategori</label><select value={sellerForm.kategori} onChange={e => setSellerForm(f => ({ ...f, kategori: e.target.value }))} style={inputStyle}>{kategoriList.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}</select></div>
+          <button onClick={buatSeller} disabled={saving} style={{ width: "100%", padding: "14px", borderRadius: "12px", background: saving ? "#475569" : "linear-gradient(135deg, #f59e0b, #ea580c)", color: "white", border: "none", fontWeight: 700, fontSize: "15px", cursor: saving ? "default" : "pointer", marginTop: "8px" }}>{saving ? "⏳ Membuat..." : "🏪 Buat Toko & Lanjut"}</button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><h3 style={{ fontSize: "16px", fontWeight: 700 }}>📦 Tambah Produk</h3><span style={{ fontSize: "12px", color: "#94a3b8" }}>{produkList.length} produk</span></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>📸 Foto</label><label style={{ display: "block", padding: "20px", borderRadius: "12px", border: "2px dashed rgba(255,255,255,0.1)", textAlign: "center", cursor: "pointer" }}>{fotoPreview ? <img src={fotoPreview} alt="" style={{ width: "100px", height: "100px", borderRadius: "10px", objectFit: "cover" }} /> : <div><div style={{ fontSize: "32px" }}>📷</div><p style={{ fontSize: "12px", color: "#64748b" }}>Tap untuk foto</p></div>}<input type="file" accept="image/*" onChange={handleFoto} style={{ display: "none" }} /></label></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>🎨 Emoji</label><div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>{emojiList.map(e => <button key={e} onClick={() => setProdukForm(f => ({ ...f, emoji: e }))} style={{ width: "36px", height: "36px", borderRadius: "8px", border: "none", fontSize: "18px", cursor: "pointer", background: produkForm.emoji === e ? "#f59e0b" : "rgba(255,255,255,0.05)" }}>{e}</button>)}</div></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Nama Produk *</label><input value={produkForm.nama} onChange={e => setProdukForm(f => ({ ...f, nama: e.target.value }))} placeholder="Nasi Goreng" style={inputStyle} /></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Harga (Rp) *</label><input type="number" value={produkForm.harga} onChange={e => setProdukForm(f => ({ ...f, harga: e.target.value }))} placeholder="15000" style={inputStyle} /></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Kategori</label><select value={produkForm.kategori} onChange={e => setProdukForm(f => ({ ...f, kategori: e.target.value }))} style={inputStyle}>{kategoriList.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}</select></div>
+          <div><label style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px", display: "block" }}>Deskripsi</label><textarea value={produkForm.deskripsi} onChange={e => setProdukForm(f => ({ ...f, deskripsi: e.target.value }))} placeholder="Bahan, porsi..." rows={2} style={{ ...inputStyle, resize: "none" }} /></div>
+          <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+            <button onClick={tambahProduk} disabled={saving} style={{ flex: 1, padding: "14px", borderRadius: "12px", background: saving ? "#475569" : "linear-gradient(135deg, #10b981, #059669)", color: "white", border: "none", fontWeight: 700, fontSize: "14px", cursor: saving ? "default" : "pointer" }}>{saving ? "⏳ Upload..." : "➕ Tambah"}</button>
+            <button onClick={selesai} style={{ padding: "14px 20px", borderRadius: "12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", fontWeight: 600, fontSize: "14px", cursor: "pointer" }}>✅ Selesai</button>
+          </div>
+          {produkList.length > 0 && <div style={{ marginTop: "12px" }}><h4 style={{ fontSize: "13px", fontWeight: 600, color: "#94a3b8", marginBottom: "8px" }}>Produk ditambahkan:</h4><div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>{produkList.map(p => <div key={p.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}><span style={{ fontSize: "13px" }}>{p.emoji} {p.nama}</span><span style={{ fontSize: "13px", fontWeight: 700, color: "#f59e0b" }}>Rp {p.harga.toLocaleString("id")}</span></div>)}</div></div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, loading: al } = useAuth();
@@ -109,6 +237,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     { id: "overview", icon: "📊", label: "Overview" },
+    { id: "dibantu", icon: "🚀", label: "Dibantu Upload" },
     { id: "users", icon: "👥", label: "Users (" + stats.users + ")" },
     { id: "stores", icon: "🏪", label: "Toko (" + stats.stores + ")" },
     { id: "orders", icon: "📦", label: "Pesanan (" + stats.orders + ")" },
@@ -216,6 +345,9 @@ export default function AdminDashboard() {
             </div>
           </>
         )}
+
+        {/* ===== DIBANTU UPLOAD TAB ===== */}
+        {activeTab === "dibantu" && <DibantuUploadTab stores={stores} setStores={setStores} products={products} setProducts={setProducts} db={db} />}
 
         {/* ===== USERS TAB ===== */}
         {activeTab === "users" && (
