@@ -150,6 +150,10 @@ export default function AdminDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editProdForm, setEditProdForm] = useState({});
+  const [editFotoFile, setEditFotoFile] = useState(null);
+  const [editFotoPreview, setEditFotoPreview] = useState(null);
 
   useEffect(() => {
     if (!al && !user) { router.push("/login"); return; }
@@ -263,6 +267,54 @@ export default function AdminDashboard() {
     if (!confirm("Hapus produk \"" + p.nama + "\"?")) return;
     await deleteDoc(doc(db, "produk", p.id));
     setProducts(prev => prev.filter(x => x.id !== p.id));
+  }
+
+  // ===== PRODUCT MANAGEMENT =====
+  async function toggleProduct(p) {
+    const newState = p.tersedia === false ? true : false;
+    await updateDoc(doc(db, "produk", p.id), { tersedia: newState });
+    setProducts(prev => prev.map(x => x.id === p.id ? { ...x, tersedia: newState } : x));
+  }
+
+  function startEditProduct(p) {
+    setEditingProduct(p.id);
+    setEditProdForm({
+      nama: p.nama || "", harga: String(p.harga || ""),
+      deskripsi: p.deskripsi || "", emoji: p.emoji || "🍚",
+      kategori: p.kategori || "makanan", foto: p.foto || "",
+    });
+    setEditFotoFile(null);
+    setEditFotoPreview(p.foto || null);
+  }
+
+  function handleEditFoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    setEditFotoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setEditFotoPreview(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function saveEditProduct() {
+    if (!editingProduct) return;
+    const updates = {
+      nama: editProdForm.nama, harga: parseInt(editProdForm.harga) || 0,
+      deskripsi: editProdForm.deskripsi, emoji: editProdForm.emoji,
+      kategori: editProdForm.kategori,
+    };
+    try {
+      if (editFotoFile) {
+        const fn = Date.now() + "_" + editFotoFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
+        const storageRef = ref(storage, "produk/" + fn);
+        await uploadBytes(storageRef, editFotoFile);
+        updates.foto = await getDownloadURL(storageRef);
+      }
+      await updateDoc(doc(db, "produk", editingProduct), updates);
+      setProducts(prev => prev.map(x => x.id === editingProduct ? { ...x, ...updates } : x));
+      setEditingProduct(null);
+    } catch (e) { alert("Gagal: " + e.message); }
   }
 
   if (al || loading) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0f172a" }}><div style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "48px", marginBottom: "8px" }}>👑</div><p>Memuat Admin Dashboard...</p></div></div>;
@@ -546,6 +598,32 @@ export default function AdminDashboard() {
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {products.map(p => {
               const store = stores.find(s => s.id === p.tokoId);
+              const isEditing = editingProduct === p.id;
+              if (isEditing) {
+                const eInput = { width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "12px" };
+                return (
+                  <div key={p.id} style={{ background: "rgba(255,255,255,0.03)", borderRadius: "12px", padding: "14px", border: "1px solid #f59e0b" }}>
+                    <h4 style={{ fontSize: "13px", fontWeight: 700, color: "#f59e0b", marginBottom: "10px" }}>✏️ Edit Produk</h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {/* Foto */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <label style={{ cursor: "pointer" }}>
+                          {editFotoPreview ? <img src={editFotoPreview} alt="" style={{ width: "60px", height: "60px", borderRadius: "8px", objectFit: "cover" }} /> : <div style={{ width: "60px", height: "60px", borderRadius: "8px", background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>📷</div>}
+                          <input type="file" accept="image/*" onChange={handleEditFoto} style={{ display: "none" }} />
+                        </label>
+                        <span style={{ fontSize: "11px", color: "#64748b" }}>Tap foto untuk ganti</span>
+                      </div>
+                      <input value={editProdForm.nama} onChange={e => setEditProdForm(f => ({ ...f, nama: e.target.value }))} placeholder="Nama" style={eInput} />
+                      <input type="number" value={editProdForm.harga} onChange={e => setEditProdForm(f => ({ ...f, harga: e.target.value }))} placeholder="Harga" style={eInput} />
+                      <textarea value={editProdForm.deskripsi} onChange={e => setEditProdForm(f => ({ ...f, deskripsi: e.target.value }))} placeholder="Deskripsi" rows={2} style={{ ...eInput, resize: "none" }} />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button onClick={saveEditProduct} style={{ flex: 1, padding: "8px", borderRadius: "8px", background: "#10b981", color: "white", border: "none", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}>💾 Simpan</button>
+                        <button onClick={() => setEditingProduct(null)} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", fontSize: "12px", cursor: "pointer" }}>Batal</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
               return (
                 <div key={p.id} style={{
                   background: "rgba(255,255,255,0.03)", borderRadius: "12px", padding: "12px",
@@ -562,10 +640,15 @@ export default function AdminDashboard() {
                     <h4 style={{ fontSize: "14px", fontWeight: 600 }}>{p.nama}</h4>
                     <p style={{ fontSize: "12px", color: "#64748b" }}>🏪 {store?.nama || "?"} • {p.kategori || "-"}</p>
                   </div>
-                  <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", flexShrink: 0 }}>
                     <p style={{ fontSize: "14px", fontWeight: 700, color: "#f59e0b" }}>Rp {(p.harga || 0).toLocaleString("id")}</p>
-                    <span style={{ fontSize: "10px", color: p.tersedia !== false ? "#34d399" : "#f87171" }}>{p.tersedia !== false ? "✅ Aktif" : "❌ Off"}</span>
-                    <button onClick={() => deleteProduct(p)} style={{ padding: "4px 10px", borderRadius: "6px", background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", fontSize: "10px", fontWeight: 600, cursor: "pointer" }}>🗑️</button>
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      <button onClick={() => toggleProduct(p)} style={{ padding: "4px 8px", borderRadius: "6px", background: p.tersedia !== false ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", border: "none", color: p.tersedia !== false ? "#34d399" : "#f87171", fontSize: "10px", fontWeight: 600, cursor: "pointer" }}>
+                        {p.tersedia !== false ? "✅ On" : "❌ Off"}
+                      </button>
+                      <button onClick={() => startEditProduct(p)} style={{ padding: "4px 8px", borderRadius: "6px", background: "rgba(59,130,246,0.15)", border: "none", color: "#60a5fa", fontSize: "10px", fontWeight: 600, cursor: "pointer" }}>✏️</button>
+                      <button onClick={() => deleteProduct(p)} style={{ padding: "4px 8px", borderRadius: "6px", background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", fontSize: "10px", fontWeight: 600, cursor: "pointer" }}>🗑️</button>
+                    </div>
                   </div>
                 </div>
               );
