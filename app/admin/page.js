@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { db, storage } from "@/lib/firebase";
 import { collection, getDocs, query, where, doc, deleteDoc, updateDoc, addDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import KelolaProduk from "@/components/admin/KelolaProduk";
 
 // ⚠️ GANTI DENGAN EMAIL GOOGLE ANDA (yang login sebagai admin)
 const ADMIN_EMAILS = ["homecarekita03@gmail.com"]; // Tambahkan email admin di sini
@@ -623,40 +624,12 @@ export default function AdminDashboard() {
 
                       {/* KELOLA PRODUK (expand) */}
                       {managingStore === s.id && (
-                        <div style={{ marginTop: "12px", padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(139,92,246,0.2)" }}>
-                          <h4 style={{ fontSize: "13px", fontWeight: 700, color: "#a78bfa", marginBottom: "10px" }}>📦 Kelola Produk — {s.nama}</h4>
-                          {storeProducts.length > 0 ? (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
-                              {storeProducts.map(p => (
-                                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", opacity: p.tersedia !== false ? 1 : 0.5 }}>
-                                  {p.foto ? <img src={p.foto} alt="" style={{ width: "36px", height: "36px", borderRadius: "6px", objectFit: "cover" }} /> : <span style={{ fontSize: "20px" }}>{p.emoji || "📦"}</span>}
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontSize: "12px", fontWeight: 600 }}>{p.nama}</p>
-                                    <p style={{ fontSize: "11px", color: "#f59e0b" }}>Rp {(p.harga || 0).toLocaleString("id")}</p>
-                                  </div>
-                                  <button onClick={() => toggleProdukToko(p)} style={{ padding: "3px 6px", borderRadius: "4px", background: p.tersedia !== false ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)", border: "none", color: p.tersedia !== false ? "#34d399" : "#f87171", fontSize: "9px", cursor: "pointer" }}>
-                                    {p.tersedia !== false ? "ON" : "OFF"}
-                                  </button>
-                                  <button onClick={() => hapusProdukToko(p)} style={{ padding: "3px 6px", borderRadius: "4px", background: "rgba(239,68,68,0.2)", border: "none", color: "#f87171", fontSize: "9px", cursor: "pointer" }}>🗑️</button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : <p style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px" }}>Belum ada produk</p>}
-                          <div style={{ padding: "10px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)" }}>
-                            <p style={{ fontSize: "11px", fontWeight: 600, color: "#a78bfa", marginBottom: "8px" }}>➕ Tambah Produk Baru</p>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                                {newFotoPreview ? <img src={newFotoPreview} alt="" style={{ width: "40px", height: "40px", borderRadius: "6px", objectFit: "cover" }} /> : <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>📷</div>}
-                                <span style={{ fontSize: "11px", color: "#64748b" }}>Tap untuk foto</span>
-                                <input type="file" accept="image/*" onChange={handleNewFoto} style={{ display: "none" }} />
-                              </label>
-                              <input value={newProduk.nama} onChange={e => setNewProduk(f => ({ ...f, nama: e.target.value }))} placeholder="Nama produk" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "12px" }} />
-                              <input type="number" value={newProduk.harga} onChange={e => setNewProduk(f => ({ ...f, harga: e.target.value }))} placeholder="Harga" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "12px" }} />
-                              <input value={newProduk.deskripsi} onChange={e => setNewProduk(f => ({ ...f, deskripsi: e.target.value }))} placeholder="Deskripsi (opsional)" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "12px" }} />
-                              <button onClick={() => tambahProdukKeToko(s.id)} style={{ padding: "8px", borderRadius: "6px", background: "linear-gradient(135deg, #10b981, #059669)", color: "white", border: "none", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}>➕ Tambah Produk</button>
-                            </div>
-                          </div>
-                        </div>
+                        <KelolaProduk
+                          tokoId={s.id}
+                          tokoNama={s.nama}
+                          products={products}
+                          setProducts={setProducts}
+                        />
                       )}
                     </>
                   )}
