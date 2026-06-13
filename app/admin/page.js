@@ -333,26 +333,39 @@ export default function AdminDashboard() {
   }
 
   async function tambahProdukKeToko(tokoId) {
-    if (!newProduk.nama || !newProduk.harga) return;
+    if (!newProduk.nama || !newProduk.harga) {
+      alert("Nama produk dan harga wajib diisi!");
+      return;
+    }
     try {
       let fotoUrl = null;
       if (newFotoFile) {
-        const fn = Date.now() + "_" + newFotoFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
-        const sr = ref(storage, "produk/" + fn);
+        var fn = Date.now() + "_" + newFotoFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
+        var sr = ref(storage, "produk/" + fn);
         await uploadBytes(sr, newFotoFile);
         fotoUrl = await getDownloadURL(sr);
       }
-      const d = {
-        tokoId: tokoId, nama: newProduk.nama.trim(), harga: parseInt(newProduk.harga),
-        deskripsi: newProduk.deskripsi.trim(), emoji: newProduk.emoji,
-        kategori: newProduk.kategori, tersedia: true, createdAt: new Date().toISOString(),
+      var d = {
+        tokoId: tokoId,
+        nama: newProduk.nama.trim(),
+        harga: parseInt(newProduk.harga),
+        deskripsi: (newProduk.deskripsi || "").trim(),
+        emoji: newProduk.emoji || "🍚",
+        kategori: newProduk.kategori || "makanan",
+        tersedia: true,
+        createdAt: new Date().toISOString(),
       };
       if (fotoUrl) d.foto = fotoUrl;
-      const ref2 = await addDoc(collection(db, "produk"), d);
-      setProducts(prev => [...prev, { id: ref2.id, ...d }]);
+      var newDoc = await addDoc(collection(db, "produk"), d);
+      setProducts(function(prev) { return prev.concat([{ id: newDoc.id, ...d }]); });
       setNewProduk({ nama: "", harga: "", deskripsi: "", emoji: "🍚", kategori: "makanan" });
-      setNewFotoFile(null); setNewFotoPreview(null);
-    } catch (e) { alert("Gagal: " + e.message); }
+      setNewFotoFile(null);
+      setNewFotoPreview(null);
+      alert("✅ Produk \"" + d.nama + "\" berhasil ditambahkan!");
+    } catch (e) {
+      console.error("Tambah produk error:", e);
+      alert("❌ Gagal: " + e.message);
+    }
   }
 
   async function toggleProdukToko(p) {

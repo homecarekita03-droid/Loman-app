@@ -38,21 +38,38 @@ export default function KeranjangPage() {
         });
       }
       setCart([]); localStorage.removeItem("loman_cart"); setSuccess(true);
-      // Smart WA: kirim pengingat singkat ke penjual
+      // WA: kirim notifikasi ke penjual saat ada pesanan
       try {
         for (var gKey of Object.keys(groups)) {
           var g = groups[gKey];
           var tokoDoc = await getDoc(doc(db, "toko", g.tokoId));
           if (tokoDoc.exists()) {
             var tokoData = tokoDoc.data();
-            var sellerPhone = tokoData.whatsapp || "";
+            // Cek semua kemungkinan field nomor HP
+            var sellerPhone = tokoData.whatsapp || tokoData.phone || tokoData.sellerPhone || tokoData.wa || "";
+            // Jika tidak ada di toko, cek dari user doc
+            if (!sellerPhone && tokoData.pemilikId) {
+              try {
+                var ownerDoc = await getDoc(doc(db, "users", tokoData.pemilikId));
+                if (ownerDoc.exists()) {
+                  sellerPhone = ownerDoc.data().phone || ownerDoc.data().whatsapp || "";
+                }
+              } catch(e) {}
+            }
             if (sellerPhone) {
-              var pesan = notifTemplates.newOrder(userData?.nama || "Pembeli", g.items.map(i=>i.nama).join(", "), sub, userData?.alamat || "");
+              var pesan = notifTemplates.newOrder(
+                userData?.nama || "Pembeli",
+                g.items.map(function(i) { return i.nama + " x" + i.qty; }).join(", "),
+                sub,
+                userData?.alamat || ""
+              );
               sendWA(sellerPhone, pesan);
+            } else {
+              console.log("No seller phone found for store:", g.tokoId);
             }
           }
         }
-      } catch(we) { console.log("WA notif:", we); }
+      } catch(we) { console.log("WA notif error:", we); }
     } catch(e) { console.error(e); alertError("Gagal", "Tidak bisa membuat pesanan. Coba lagi."); }
     setLoading(false);
   }
