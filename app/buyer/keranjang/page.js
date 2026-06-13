@@ -65,7 +65,7 @@ export default function KeranjangPage() {
               );
               sendWA(sellerPhone, pesan);
             } else {
-              console.log("No seller phone found for store:", g.tokoId);
+              alert("Notifikasi WA: Nomor HP penjual belum diisi di data toko. Admin perlu edit toko dan isi No. WhatsApp.");
             }
           }
         }
