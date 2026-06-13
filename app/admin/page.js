@@ -148,6 +148,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [editingStore, setEditingStore] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     if (!al && !user) { router.push("/login"); return; }
@@ -224,6 +226,44 @@ export default function AdminDashboard() {
     done: { bg: "#d1fae5", c: "#059669", l: "✅ Selesai" },
     cancelled: { bg: "#fee2e2", c: "#dc2626", l: "❌ Batal" },
   };
+
+  // ===== STORE MANAGEMENT =====
+  async function toggleStore(s) {
+    const newState = !s.isOpen;
+    await updateDoc(doc(db, "toko", s.id), { isOpen: newState });
+    setStores(prev => prev.map(x => x.id === s.id ? { ...x, isOpen: newState } : x));
+  }
+
+  function startEdit(s) {
+    setEditingStore(s.id);
+    setEditForm({ nama: s.nama || "", alamat: s.alamat || "", kategori: s.kategori || "makanan", whatsapp: s.whatsapp || "", deskripsi: s.deskripsi || "" });
+  }
+
+  async function saveEdit() {
+    if (!editingStore) return;
+    await updateDoc(doc(db, "toko", editingStore), editForm);
+    setStores(prev => prev.map(x => x.id === editingStore ? { ...x, ...editForm } : x));
+    setEditingStore(null);
+  }
+
+  async function deleteStore(s) {
+    if (!confirm("Hapus toko \"" + s.nama + "\"?\n\nSemua produk di toko ini juga akan dihapus.")) return;
+    // Hapus semua produk toko ini
+    const storeProducts = products.filter(p => p.tokoId === s.id);
+    for (const p of storeProducts) {
+      await deleteDoc(doc(db, "produk", p.id));
+    }
+    // Hapus toko
+    await deleteDoc(doc(db, "toko", s.id));
+    setStores(prev => prev.filter(x => x.id !== s.id));
+    setProducts(prev => prev.filter(x => x.tokoId !== s.id));
+  }
+
+  async function deleteProduct(p) {
+    if (!confirm("Hapus produk \"" + p.nama + "\"?")) return;
+    await deleteDoc(doc(db, "produk", p.id));
+    setProducts(prev => prev.filter(x => x.id !== p.id));
+  }
 
   if (al || loading) return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0f172a" }}><div style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "48px", marginBottom: "8px" }}>👑</div><p>Memuat Admin Dashboard...</p></div></div>;
 
@@ -396,39 +436,74 @@ export default function AdminDashboard() {
               const storeOrders = orders.filter(o => o.tokoId === s.id);
               const storeProducts = products.filter(p => p.tokoId === s.id);
               const storeRevenue = storeOrders.filter(o => o.status === "done").reduce((sum, o) => sum + (o.totalHarga || 0), 0);
+              const isEditing = editingStore === s.id;
               return (
                 <div key={s.id} style={{
                   background: "rgba(255,255,255,0.03)", borderRadius: "14px", padding: "14px",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  border: isEditing ? "1px solid #f59e0b" : "1px solid rgba(255,255,255,0.06)",
                 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                      <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{s.emoji || "🏪"}</div>
-                      <div>
-                        <h4 style={{ fontSize: "15px", fontWeight: 700 }}>{s.nama}</h4>
-                        <p style={{ fontSize: "11px", color: "#64748b" }}>{s.alamat || "-"} • {s.kategori || "-"}</p>
+                  {isEditing ? (
+                    /* MODE EDIT */
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <h4 style={{ fontSize: "14px", fontWeight: 700, color: "#f59e0b" }}>✏️ Edit Toko</h4>
+                      <input value={editForm.nama} onChange={e => setEditForm(f => ({ ...f, nama: e.target.value }))} placeholder="Nama Toko" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "13px" }} />
+                      <input value={editForm.whatsapp} onChange={e => setEditForm(f => ({ ...f, whatsapp: e.target.value }))} placeholder="No. WhatsApp" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "13px" }} />
+                      <input value={editForm.alamat} onChange={e => setEditForm(f => ({ ...f, alamat: e.target.value }))} placeholder="Alamat" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "13px" }} />
+                      <textarea value={editForm.deskripsi} onChange={e => setEditForm(f => ({ ...f, deskripsi: e.target.value }))} placeholder="Deskripsi" rows={2} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e2e8f0", fontSize: "13px", resize: "none" }} />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button onClick={saveEdit} style={{ flex: 1, padding: "10px", borderRadius: "8px", background: "#10b981", color: "white", border: "none", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}>💾 Simpan</button>
+                        <button onClick={() => setEditingStore(null)} style={{ padding: "10px 16px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", fontSize: "13px", cursor: "pointer" }}>Batal</button>
                       </div>
                     </div>
-                    <span style={{
-                      padding: "4px 10px", borderRadius: "10px", fontSize: "10px", fontWeight: 600,
-                      background: s.isOpen ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
-                      color: s.isOpen ? "#34d399" : "#f87171",
-                    }}>{s.isOpen ? "● Buka" : "● Tutup"}</span>
-                  </div>
-                  <div style={{ display: "flex", gap: "12px" }}>
-                    <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", flex: 1, textAlign: "center" }}>
-                      <div style={{ fontSize: "16px", fontWeight: 800, color: "#f59e0b" }}>{storeProducts.length}</div>
-                      <div style={{ fontSize: "10px", color: "#64748b" }}>Produk</div>
-                    </div>
-                    <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", flex: 1, textAlign: "center" }}>
-                      <div style={{ fontSize: "16px", fontWeight: 800, color: "#3b82f6" }}>{storeOrders.length}</div>
-                      <div style={{ fontSize: "10px", color: "#64748b" }}>Pesanan</div>
-                    </div>
-                    <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", flex: 1, textAlign: "center" }}>
-                      <div style={{ fontSize: "16px", fontWeight: 800, color: "#10b981" }}>{formatRp(storeRevenue)}</div>
-                      <div style={{ fontSize: "10px", color: "#64748b" }}>Revenue</div>
-                    </div>
-                  </div>
+                  ) : (
+                    /* MODE LIHAT */
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                          <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{s.emoji || "🏪"}</div>
+                          <div>
+                            <h4 style={{ fontSize: "15px", fontWeight: 700 }}>{s.nama}</h4>
+                            <p style={{ fontSize: "11px", color: "#64748b" }}>{s.alamat || "-"} • {s.kategori || "-"}</p>
+                            {s.whatsapp && <p style={{ fontSize: "11px", color: "#64748b" }}>📱 {s.whatsapp}</p>}
+                          </div>
+                        </div>
+                        <span style={{
+                          padding: "4px 10px", borderRadius: "10px", fontSize: "10px", fontWeight: 600,
+                          background: s.isOpen ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
+                          color: s.isOpen ? "#34d399" : "#f87171",
+                        }}>{s.isOpen ? "● Buka" : "● Tutup"}</span>
+                      </div>
+
+                      {/* Stats */}
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                        <div style={{ padding: "6px 10px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", flex: 1, textAlign: "center" }}>
+                          <div style={{ fontSize: "14px", fontWeight: 800, color: "#f59e0b" }}>{storeProducts.length}</div>
+                          <div style={{ fontSize: "9px", color: "#64748b" }}>Produk</div>
+                        </div>
+                        <div style={{ padding: "6px 10px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", flex: 1, textAlign: "center" }}>
+                          <div style={{ fontSize: "14px", fontWeight: 800, color: "#3b82f6" }}>{storeOrders.length}</div>
+                          <div style={{ fontSize: "9px", color: "#64748b" }}>Pesanan</div>
+                        </div>
+                        <div style={{ padding: "6px 10px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", flex: 1, textAlign: "center" }}>
+                          <div style={{ fontSize: "14px", fontWeight: 800, color: "#10b981" }}>{formatRp(storeRevenue)}</div>
+                          <div style={{ fontSize: "9px", color: "#64748b" }}>Revenue</div>
+                        </div>
+                      </div>
+
+                      {/* Tombol Aksi */}
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        <button onClick={() => toggleStore(s)} style={{ padding: "7px 12px", borderRadius: "8px", background: s.isOpen ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)", border: "none", color: s.isOpen ? "#f87171" : "#34d399", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}>
+                          {s.isOpen ? "🔴 Tutup" : "🟢 Buka"}
+                        </button>
+                        <button onClick={() => startEdit(s)} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(59,130,246,0.15)", border: "none", color: "#60a5fa", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}>
+                          ✏️ Edit
+                        </button>
+                        <button onClick={() => deleteStore(s)} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}>
+                          🗑️ Hapus
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -487,9 +562,10 @@ export default function AdminDashboard() {
                     <h4 style={{ fontSize: "14px", fontWeight: 600 }}>{p.nama}</h4>
                     <p style={{ fontSize: "12px", color: "#64748b" }}>🏪 {store?.nama || "?"} • {p.kategori || "-"}</p>
                   </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                     <p style={{ fontSize: "14px", fontWeight: 700, color: "#f59e0b" }}>Rp {(p.harga || 0).toLocaleString("id")}</p>
                     <span style={{ fontSize: "10px", color: p.tersedia !== false ? "#34d399" : "#f87171" }}>{p.tersedia !== false ? "✅ Aktif" : "❌ Off"}</span>
+                    <button onClick={() => deleteProduct(p)} style={{ padding: "4px 10px", borderRadius: "6px", background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", fontSize: "10px", fontWeight: 600, cursor: "pointer" }}>🗑️</button>
                   </div>
                 </div>
               );
