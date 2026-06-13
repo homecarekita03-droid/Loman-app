@@ -54,33 +54,67 @@ export default function SellerDashboard() {
     if (!al && !user) router.push("/login");
   }, [user, al, router]);
 
-  // Fetch toko (one-time)
+  // Fetch toko — auto-link ke toko yang sudah didaftarkan admin
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     async function fetchStore() {
       try {
+        // 1. Cek apakah user sudah punya toko (pemilikId = user.uid)
         const sq = await getDocs(query(collection(db, "toko"), where("pemilikId", "==", user.uid)));
         if (cancelled) return;
-        if (sq.empty) {
-          const nr = doc(collection(db, "toko"));
-          const ns = {
-            nama: "Toko " + (userData?.nama || "Saya"),
-            pemilikId: user.uid,
-            kategori: "makanan",
-            deskripsi: "",
-            alamat: userData?.alamat || "",
-            jamBuka: "08:00",
-            jamTutup: "20:00",
-            emoji: "🏪",
-            rating: 0,
-            isOpen: true,
-            createdAt: new Date().toISOString(),
-          };
-          await setDoc(nr, ns);
-          if (!cancelled) setStore({ id: nr.id, ...ns });
-        } else {
+
+        if (!sq.empty) {
+          // User sudah punya toko
           if (!cancelled) setStore({ id: sq.docs[0].id, ...sq.docs[0].data() });
+        } else {
+          // 2. Belum punya toko → cek apakah ada toko yang didaftarkan admin dengan nomor HP ini
+          const userPhone = userData?.phone || "";
+          let linkedStore = null;
+
+          if (userPhone) {
+            // Cek toko berdasarkan field whatsapp/phone/sellerPhone
+            const allStores = await getDocs(collection(db, "toko"));
+            for (const storeDoc of allStores.docs) {
+              const storeData = storeDoc.data();
+              const storePhone = storeData.whatsapp || storeData.phone || storeData.sellerPhone || "";
+              // Bandingkan nomor HP (hapus karakter non-digit)
+              const cleanUserPhone = userPhone.replace(/[^0-9]/g, "");
+              const cleanStorePhone = storePhone.replace(/[^0-9]/g, "");
+              if (cleanStorePhone && cleanUserPhone && (
+                cleanStorePhone === cleanUserPhone ||
+                cleanStorePhone === "62" + cleanUserPhone.replace(/^0/, "") ||
+                "62" + cleanStorePhone.replace(/^0/, "") === cleanUserPhone
+              )) {
+                linkedStore = { id: storeDoc.id, ...storeData };
+                break;
+              }
+            }
+          }
+
+          if (linkedStore) {
+            // 3. Toko ditemukan! Link user ke toko ini
+            await updateDoc(doc(db, "toko", linkedStore.id), { pemilikId: user.uid });
+            if (!cancelled) setStore({ ...linkedStore, pemilikId: user.uid });
+          } else {
+            // 4. Tidak ada toko yang cocok → buat toko baru
+            const nr = doc(collection(db, "toko"));
+            const ns = {
+              nama: "Toko " + (userData?.nama || "Saya"),
+              pemilikId: user.uid,
+              kategori: "makanan",
+              deskripsi: "",
+              alamat: userData?.alamat || "",
+              jamBuka: "08:00",
+              jamTutup: "20:00",
+              emoji: "🏪",
+              rating: 0,
+              isOpen: true,
+              createdAt: new Date().toISOString(),
+            };
+            await setDoc(nr, ns);
+            if (!cancelled) setStore({ id: nr.id, ...ns });
+          }
         }
       } catch (e) {
         console.error("Fetch store error:", e);
@@ -89,7 +123,7 @@ export default function SellerDashboard() {
     }
     fetchStore();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, userData]);
 
   // Real-time listener untuk pesanan
   useEffect(() => {

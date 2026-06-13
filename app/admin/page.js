@@ -620,6 +620,17 @@ export default function AdminDashboard() {
                         <button onClick={() => deleteStore(s)} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}>
                           🗑️ Hapus
                         </button>
+                        {/* Kirim Link Klaim via WA */}
+                        {s.whatsapp && (
+                          <button onClick={() => {
+                            var claimLink = "https://loman.store/claim?id=" + s.id;
+                            var claimMsg = "Halo " + (s.nama || "Penjual") + "!\n\nToko Anda sudah terdaftar di Loman (Local Market Nusantara).\n\nKlik link ini untuk klaim dan kelola toko Anda:\n" + claimLink + "\n\nDengan mengklaim, Anda bisa:\n✅ Melihat pesanan masuk\n✅ Mengelola produk\n✅ Menerima notifikasi otomatis\n\nGratis, tanpa biaya apapun!";
+                            var waUrl = "https://wa.me/" + s.whatsapp.replace(/[^0-9]/g, "").replace(/^0/, "62") + "?text=" + encodeURIComponent(claimMsg);
+                            window.open(waUrl, "_blank");
+                          }} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(16,185,129,0.15)", border: "none", color: "#34d399", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}>
+                            🔗 Klaim
+                          </button>
+                        )}
                       </div>
 
                       {/* KELOLA PRODUK (expand) */}
