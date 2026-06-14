@@ -42,12 +42,11 @@ export default function KeranjangPage() {
       try {
         for (var gKey of Object.keys(groups)) {
           var g = groups[gKey];
+          var subTotal = g.items.reduce(function(s,i) { return s + i.harga * i.qty; }, 0);
           var tokoDoc = await getDoc(doc(db, "toko", g.tokoId));
           if (tokoDoc.exists()) {
             var tokoData = tokoDoc.data();
-            // Cek semua kemungkinan field nomor HP
             var sellerPhone = tokoData.whatsapp || tokoData.phone || tokoData.sellerPhone || tokoData.wa || "";
-            // Jika tidak ada di toko, cek dari user doc
             if (!sellerPhone && tokoData.pemilikId) {
               try {
                 var ownerDoc = await getDoc(doc(db, "users", tokoData.pemilikId));
@@ -60,7 +59,7 @@ export default function KeranjangPage() {
               var pesan = notifTemplates.newOrder(
                 userData?.nama || "Pembeli",
                 g.items.map(function(i) { return i.nama + " x" + i.qty; }).join(", "),
-                sub,
+                subTotal,
                 userData?.alamat || ""
               );
               sendWA(sellerPhone, pesan);
