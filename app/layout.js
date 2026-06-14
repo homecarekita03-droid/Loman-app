@@ -9,11 +9,11 @@ const SITE_URL = "https://loman.store";
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Loman — Belanja dari Tetangga, Semudah Scroll HP",
-    template: "%s | Loman",
+    default: "Loman — Belanja dari Tetangga, Semudah Scroll HP | Marketplace UMKM",
+    template: "%s | Loman Marketplace",
   },
   description:
-    "Marketplace UMKM perumahan. Pesan makanan, kue, laundry dari tetangga — antar langsung ke rumah. Gratis, tanpa download, langsung pakai!",
+    "Loman adalah marketplace UMKM perumahan. Pesan makanan, kue, laundry, dan kebutuhan harian dari tetangga Anda — antar langsung ke rumah, bayar COD. Gratis tanpa download!",
   keywords: [
     "marketplace perumahan",
     "belanja tetangga",
@@ -35,23 +35,23 @@ export const metadata = {
     locale: "id_ID",
     url: SITE_URL,
     siteName: "Loman",
-    title: "Loman — Belanja dari Tetangga, Semudah Scroll HP 📱",
+    title: "Loman — Belanja dari Tetangga, Semudah Scroll HP 📱 | Marketplace UMKM Perumahan",
     description:
-      "Marketplace UMKM perumahan. Pesan makanan, kue, laundry dari tetangga — antar langsung ke rumah. Gratis!",
+      "Temukan makanan, kue, laundry, dan kebutuhan harian dari tetangga Anda di Loman. Pesan mudah, antar ke rumah, bayar COD. Marketplace UMKM perumahan terpercaya!",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Loman — Local Market Nusantara",
+        alt: "Loman — Marketplace UMKM Perumahan. Belanja dari Tetangga!",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Loman — Belanja dari Tetangga, Semudah Scroll HP",
+    title: "Loman — Belanja dari Tetangga, Semudah Scroll HP | Marketplace UMKM",
     description:
-      "Marketplace UMKM perumahan. Pesan makanan, kue, laundry dari tetangga — antar langsung ke rumah!",
+      "Loman marketplace UMKM perumahan. Pesan makanan, kue, laundry dari tetangga — antar langsung ke rumah, bayar COD. Gratis tanpa download!",
     images: ["/og-image.png"],
   },
   robots: {
